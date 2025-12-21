@@ -48,7 +48,7 @@ export default {
         viewSplit: 'Split view',
         viewPreview: 'WYSIWYG view'
     },
-    
+
     edit: {
         menu: 'Edit',
         undo: 'Undo',

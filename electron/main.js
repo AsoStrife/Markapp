@@ -18,7 +18,7 @@ function getFilePathFromArgs() {
         // Ignore flags and non-file arguments
         if (arg.startsWith('--') || arg.startsWith('-')) continue
         if (arg === '.' || arg === 'electron/main.js') continue
-        
+
         // Check if it's a .md file
         if (arg.toLowerCase().endsWith('.md') && fs.existsSync(arg)) {
             return path.resolve(arg)
@@ -30,11 +30,11 @@ function getFilePathFromArgs() {
 // Centralized function to open a file and send to renderer
 function openFileInRenderer(filePath) {
     if (!filePath || !fs.existsSync(filePath)) return
-    
+
     try {
         const content = fs.readFileSync(filePath, 'utf-8')
         currentFilePath = filePath
-        
+
         if (mainWindow && mainWindow.webContents) {
             updateWindowTitle(filePath)
             mainWindow.webContents.send('open-file', { filePath, content })
@@ -180,7 +180,7 @@ function createWindow() {
     mainWindow.on('closed', () => {
         mainWindow = null
     })
-    
+
     // Handle pending file after window finishes loading
     mainWindow.webContents.on('did-finish-load', () => {
         if (pendingFileToOpen) {
@@ -259,7 +259,7 @@ ipcMain.handle('open-file-dialog', async () => {
 app.whenReady().then(async () => {
     // Check if a .md file was passed as argument (double-click or context menu)
     pendingFileToOpen = getFilePathFromArgs()
-    
+
     // Carica i file di traduzione delle UI da build (Vite) o dalla sorgente usando import dinamico ESM
     try {
         const itPath = path.join(__dirname, '../src/assets/i18n/it/index.js')

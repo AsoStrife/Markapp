@@ -31,13 +31,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('file-save-as', callback)
         return () => ipcRenderer.removeListener('file-save-as', callback)
     },
-    
+
     // Handle file opened via file association (double-click, context menu)
     onOpenFile: (callback) => {
         ipcRenderer.on('open-file', (event, data) => callback(data))
         return () => ipcRenderer.removeListener('open-file', callback)
     },
-    
+
     // Menu / locale control
     setAppLocale: (locale) => ipcRenderer.send('set-app-locale', locale),
     getAppLocale: () => ipcRenderer.invoke('get-app-locale')

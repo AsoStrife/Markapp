@@ -48,7 +48,7 @@ export default {
         viewSplit: 'Vista Split',
         viewPreview: 'Vista WYSIWYG'
     },
-    
+
     edit: {
         menu: 'Modifica',
         undo: 'Annulla',

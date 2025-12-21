@@ -554,14 +554,14 @@ onMounted(() => {
         window.electronAPI.onFileSaveAs(() => {
             handleSaveAs()
         })
-        
+
         // Handle file opened via file association (double-click, right-click → Open with)
         window.electronAPI.onOpenFile((data) => {
             if (data && data.content !== undefined) {
                 markdownContent.value = data.content
                 currentFilePath.value = data.filePath
                 isModified.value = false
-                
+
                 if (tiptapEditor.value) {
                     isUpdatingFromMarkdown.value = true
                     const html = marked(data.content)
