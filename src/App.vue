@@ -10,7 +10,7 @@ import hljs from 'highlight.js'
 import TurndownService from 'turndown'
 
 // Tiptap imports
-import { useEditor, EditorContent } from '@tiptap/vue-3'
+import { useEditor } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
@@ -24,6 +24,15 @@ import { TableHeader } from '@tiptap/extension-table-header'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import Placeholder from '@tiptap/extension-placeholder'
 import { common, createLowlight } from 'lowlight'
+
+// Components
+import TitleBar from './components/TitleBar.vue'
+import Toolbar from './components/Toolbar.vue'
+import MarkdownEditor from './components/MarkdownEditor.vue'
+import PreviewPane from './components/PreviewPane.vue'
+import WysiwygEditor from './components/WysiwygEditor.vue'
+import StatusBar from './components/StatusBar.vue'
+import OutlinePanel from './components/OutlinePanel.vue'
 
 // Configurazione lowlight per syntax highlighting
 const lowlight = createLowlight(common)
@@ -91,9 +100,48 @@ const markdownContent = ref(initialLang === 'it' ? welcomeIt : welcomeEn)
 const currentFilePath = ref(null)
 const isModified = ref(false)
 const viewMode = ref('split') // 'split', 'raw', 'preview'
-const editorRef = ref(null)
+const markdownEditorRef = ref(null)
 const isUpdatingFromTiptap = ref(false)
 const isUpdatingFromMarkdown = ref(false)
+const showOutline = ref(true)
+const restoreSessionEnabled = useLocalStorage('markapp.restoreSession', true)
+const sessionState = useLocalStorage('markapp.session', { filePath: null, cursor: 0 })
+const lastCursorIndex = ref(0)
+
+// UI texts
+const toolbarTitles = computed(() => ({
+    h1: t('toolbar.h1'),
+    h2: t('toolbar.h2'),
+    h3: t('toolbar.h3'),
+    h4: t('toolbar.h4'),
+    bold: t('toolbar.bold'),
+    italic: t('toolbar.italic'),
+    underline: t('toolbar.underline'),
+    strike: t('toolbar.strike'),
+    code: t('toolbar.code'),
+    codeBlock: t('toolbar.codeBlock'),
+    bulletList: t('toolbar.bulletList'),
+    orderedList: t('toolbar.numberedList'),
+    taskList: t('toolbar.taskList'),
+    blockquote: t('toolbar.blockquote'),
+    link: t('toolbar.link'),
+    image: t('toolbar.image'),
+    hr: t('toolbar.hr'),
+    table: t('toolbar.table'),
+}))
+
+const statusText = computed(() => ({
+    markdown: t('status.markdown'),
+    encoding: t('status.encoding'),
+    lines: t('stats.lines'),
+    words: t('stats.words'),
+    viewRaw: t('toolbar.viewRaw'),
+    viewSplit: t('toolbar.viewSplit'),
+    viewPreview: t('toolbar.viewPreview'),
+    outline: 'Outline',
+    settings: t('settings.menu'),
+    restoreSession: t('settings.restoreSession'),
+}))
 
 // Configurazione Turndown per HTML→Markdown
 const turndownService = new TurndownService({
@@ -133,11 +181,44 @@ const activeEditor = computed(() => {
 })
 
 // Computed per il rendering del markdown (per split view)
+// Render preview HTML with block range wrappers to map cursor indices
 const renderedMarkdown = computed(() => {
     try {
-        return marked(markdownContent.value)
+        const md = markdownContent.value || ''
+        const tokens = marked.lexer(md)
+        let offset = 0
+        const parts = []
+        for (const token of tokens) {
+            const start = offset
+            const raw = token.raw || ''
+            offset += raw.length
+            const html = marked.parser([token])
+            parts.push(`<div class="md-block" data-start="${start}" data-end="${offset}">${html}</div>`)
+        }
+        return parts.join('')
     } catch (err) {
         return `<p class="text-red-500">${t('alerts.renderError')}</p>`
+    }
+})
+
+// Outline items from markdown headings
+const outlineItems = computed(() => {
+    try {
+        const md = markdownContent.value || ''
+        const tokens = marked.lexer(md)
+        let offset = 0
+        const items = []
+        for (const token of tokens) {
+            const start = offset
+            const raw = token.raw || ''
+            offset += raw.length
+            if (token.type === 'heading') {
+                items.push({ title: token.text || '', level: token.depth || 1, index: start })
+            }
+        }
+        return items
+    } catch (_) {
+        return []
     }
 })
 
@@ -176,7 +257,8 @@ const tiptapEditor = useEditor({
             placeholder: t('editor.placeholder'),
         }),
     ],
-    content: renderedMarkdown.value,
+    // Initialize with plain HTML without range wrappers
+    content: marked(markdownContent.value),
     editorProps: {
         attributes: {
             class: 'prose prose-lg max-w-none focus:outline-none min-h-full p-6',
@@ -193,6 +275,36 @@ const tiptapEditor = useEditor({
         isUpdatingFromTiptap.value = false
     },
 })
+const previewPaneRef = ref(null)
+
+function handleCursor(index) {
+    if (viewMode.value === 'split' && previewPaneRef.value && typeof index === 'number') {
+        previewPaneRef.value.highlightByIndex(index)
+    }
+    if (typeof index === 'number') {
+        lastCursorIndex.value = index
+        if (restoreSessionEnabled.value) {
+            sessionState.value = {
+                filePath: currentFilePath.value || null,
+                cursor: index,
+            }
+        }
+    }
+}
+
+function handleOutlineSelect(index) {
+    if (typeof index !== 'number') return
+    if (viewMode.value === 'preview') {
+        // Switch to split to show preview alongside editor for jumping
+        viewMode.value = 'split'
+    }
+    if (previewPaneRef.value) {
+        previewPaneRef.value.highlightByIndex(index)
+    }
+    if (markdownEditorRef.value) {
+        markdownEditorRef.value.jumpToIndex(index)
+    }
+}
 
 // Watch per sincronizzare markdown → Tiptap
 watch(markdownContent, (newValue) => {
@@ -216,222 +328,68 @@ watch(viewMode, (newMode) => {
     }
 })
 
-// Funzioni per la formattazione MARKDOWN EDITOR
-function getSelection() {
-    const textarea = editorRef.value
-    if (!textarea) return { start: 0, end: 0, text: '' }
-
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const text = markdownContent.value.substring(start, end)
-
-    return { start, end, text }
-}
-
-function insertText(before, after = '', defaultText = '') {
-    const textarea = editorRef.value
-    if (!textarea) return
-
-    const { start, end, text } = getSelection()
-    const selectedText = text || defaultText
-
-    const newText =
-        markdownContent.value.substring(0, start) +
-        before + selectedText + after +
-        markdownContent.value.substring(end)
-
-    markdownContent.value = newText
-
-    setTimeout(() => {
-        textarea.focus()
-        textarea.setSelectionRange(
-            start + before.length,
-            start + before.length + selectedText.length
-        )
-    }, 0)
-}
-
-function insertAtLineStart(prefix) {
-    const textarea = editorRef.value
-    if (!textarea) return
-
-    const { start } = getSelection()
-    const content = markdownContent.value
-
-    let lineStart = content.lastIndexOf('\n', start - 1) + 1
-
-    const newText =
-        content.substring(0, lineStart) +
-        prefix +
-        content.substring(lineStart)
-
-    markdownContent.value = newText
-
-    setTimeout(() => {
-        textarea.focus()
-        textarea.setSelectionRange(start + prefix.length, start + prefix.length)
-    }, 0)
-}
-
-// Formattazione - supporta entrambi gli editor
-function formatBold() {
+// Toolbar actions routing
+function handleToolbarAction(action) {
     if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleBold().run()
-    } else {
-        insertText('**', '**', 'testo grassetto')
-    }
-}
-
-function formatItalic() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleItalic().run()
-    } else {
-        insertText('*', '*', 'testo corsivo')
-    }
-}
-
-function formatUnderline() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleUnderline().run()
-    } else {
-        insertText('<u>', '</u>', 'testo sottolineato')
-    }
-}
-
-function formatStrikethrough() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleStrike().run()
-    } else {
-        insertText('~~', '~~', 'testo barrato')
-    }
-}
-
-function formatCode() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleCode().run()
-    } else {
-        insertText('`', '`', 'codice')
-    }
-}
-
-function formatCodeBlock() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleCodeBlock().run()
-    } else {
-        insertText('\n```\n', '\n```\n', 'codice')
-    }
-}
-
-function formatLink() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        const url = prompt(t('prompt.enterUrl'), 'https://')
-        if (url) {
-            tiptapEditor.value.chain().focus().setLink({ href: url }).run()
+        const chain = tiptapEditor.value.chain().focus()
+        switch (action) {
+            case 'bold': chain.toggleBold().run(); break
+            case 'italic': chain.toggleItalic().run(); break
+            case 'underline': chain.toggleUnderline().run(); break
+            case 'strike': chain.toggleStrike().run(); break
+            case 'code': chain.toggleCode().run(); break
+            case 'codeBlock': chain.toggleCodeBlock().run(); break
+            case 'blockquote': chain.toggleBlockquote().run(); break
+            case 'h1': chain.toggleHeading({ level: 1 }).run(); break
+            case 'h2': chain.toggleHeading({ level: 2 }).run(); break
+            case 'h3': chain.toggleHeading({ level: 3 }).run(); break
+            case 'h4': chain.toggleHeading({ level: 4 }).run(); break
+            case 'bulletList': chain.toggleBulletList().run(); break
+            case 'orderedList': chain.toggleOrderedList().run(); break
+            case 'taskList': chain.toggleTaskList().run(); break
+            case 'hr': chain.setHorizontalRule().run(); break
+            case 'table': chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); break
+            case 'link': {
+                const url = prompt(t('prompt.enterUrl'), 'https://')
+                if (url) chain.setLink({ href: url }).run()
+                break
+            }
+            case 'image': {
+                const url = prompt(t('prompt.enterImageUrl'), 'https://')
+                if (url) chain.setImage({ src: url }).run()
+                break
+            }
         }
     } else {
-        const { text } = getSelection()
-        if (text) {
-            insertText('[', '](url)', '')
-        } else {
-            insertText('[testo link](', ')', 'url')
+        if (!markdownEditorRef.value) return
+        switch (action) {
+            case 'bold': markdownEditorRef.value.formatBold(); break
+            case 'italic': markdownEditorRef.value.formatItalic(); break
+            case 'underline': markdownEditorRef.value.formatUnderline(); break
+            case 'strike': markdownEditorRef.value.formatStrikethrough(); break
+            case 'code': markdownEditorRef.value.formatCode(); break
+            case 'codeBlock': markdownEditorRef.value.formatCodeBlock(); break
+            case 'blockquote': markdownEditorRef.value.formatBlockquote(); break
+            case 'h1': markdownEditorRef.value.formatH1(); break
+            case 'h2': markdownEditorRef.value.formatH2(); break
+            case 'h3': markdownEditorRef.value.formatH3(); break
+            case 'h4': markdownEditorRef.value.formatH4(); break
+            case 'bulletList': markdownEditorRef.value.formatBulletList(); break
+            case 'orderedList': markdownEditorRef.value.formatNumberedList(); break
+            case 'taskList': markdownEditorRef.value.formatTaskList(); break
+            case 'hr': markdownEditorRef.value.formatHorizontalRule(); break
+            case 'table': markdownEditorRef.value.formatTable(); break
+            case 'link': {
+                const url = prompt(t('prompt.enterUrl'), 'https://')
+                markdownEditorRef.value.applyLink(url)
+                break
+            }
+            case 'image': {
+                const url = prompt(t('prompt.enterImageUrl'), 'https://')
+                markdownEditorRef.value.applyImage(url)
+                break
+            }
         }
-    }
-}
-
-function formatImage() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        const url = prompt(t('prompt.enterImageUrl'), 'https://')
-        if (url) {
-            tiptapEditor.value.chain().focus().setImage({ src: url }).run()
-        }
-    } else {
-        insertText('![alt text](', ')', 'url-immagine')
-    }
-}
-
-function formatBlockquote() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleBlockquote().run()
-    } else {
-        insertAtLineStart('> ')
-    }
-}
-
-function formatH1() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleHeading({ level: 1 }).run()
-    } else {
-        insertAtLineStart('# ')
-    }
-}
-
-function formatH2() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleHeading({ level: 2 }).run()
-    } else {
-        insertAtLineStart('## ')
-    }
-}
-
-function formatH3() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleHeading({ level: 3 }).run()
-    } else {
-        insertAtLineStart('### ')
-    }
-}
-
-function formatH4() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleHeading({ level: 4 }).run()
-    } else {
-        insertAtLineStart('#### ')
-    }
-}
-
-function formatBulletList() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleBulletList().run()
-    } else {
-        insertAtLineStart('- ')
-    }
-}
-
-function formatNumberedList() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleOrderedList().run()
-    } else {
-        insertAtLineStart('1. ')
-    }
-}
-
-function formatTaskList() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().toggleTaskList().run()
-    } else {
-        insertAtLineStart('- [ ] ')
-    }
-}
-
-function formatHorizontalRule() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().setHorizontalRule().run()
-    } else {
-        insertText('\n---\n', '', '')
-    }
-}
-
-function formatTable() {
-    if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
-        tiptapEditor.value.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-    } else {
-        const tableTemplate = `
-| Colonna 1 | Colonna 2 | Colonna 3 |
-|-----------|-----------|-----------|
-| Cella 1   | Cella 2   | Cella 3   |
-| Cella 4   | Cella 5   | Cella 6   |
-`
-        insertText(tableTemplate, '', '')
     }
 }
 
@@ -484,6 +442,13 @@ async function handleOpen() {
         currentFilePath.value = result.filePath
         isModified.value = false
 
+        if (restoreSessionEnabled.value) {
+            sessionState.value = {
+                filePath: result.filePath,
+                cursor: lastCursorIndex.value || 0,
+            }
+        }
+
         // Aggiorna anche Tiptap
         if (tiptapEditor.value) {
             isUpdatingFromMarkdown.value = true
@@ -502,6 +467,10 @@ function handleNew() {
     markdownContent.value = newContent
     currentFilePath.value = null
     isModified.value = false
+
+    if (restoreSessionEnabled.value) {
+        sessionState.value = { filePath: null, cursor: 0 }
+    }
 
     // Aggiorna anche Tiptap
     if (tiptapEditor.value) {
@@ -539,6 +508,13 @@ onMounted(() => {
             currentFilePath.value = data.filePath
             isModified.value = false
 
+            if (restoreSessionEnabled.value) {
+                sessionState.value = {
+                    filePath: data.filePath,
+                    cursor: lastCursorIndex.value || 0,
+                }
+            }
+
             if (tiptapEditor.value) {
                 isUpdatingFromMarkdown.value = true
                 const html = marked(data.content)
@@ -555,12 +531,49 @@ onMounted(() => {
             handleSaveAs()
         })
 
+
+    // Attempt session restore on startup if enabled
+    if (restoreSessionEnabled.value && sessionState.value && sessionState.value.filePath && window.electronAPI && window.electronAPI.openFileByPath) {
+        window.electronAPI.openFileByPath(sessionState.value.filePath).then((result) => {
+            if (result && result.success) {
+                markdownContent.value = result.content
+                currentFilePath.value = result.filePath
+                isModified.value = false
+
+                if (tiptapEditor.value) {
+                    isUpdatingFromMarkdown.value = true
+                    const html = marked(result.content)
+                    tiptapEditor.value.commands.setContent(html, false)
+                    isUpdatingFromMarkdown.value = false
+                }
+
+                // Jump to last cursor index (clamped)
+                const idx = Math.max(0, Math.min(sessionState.value.cursor || 0, (result.content || '').length))
+                // Ensure editor is mounted before jumping
+                setTimeout(() => {
+                    if (markdownEditorRef.value) {
+                        markdownEditorRef.value.jumpToIndex(idx)
+                    }
+                }, 50)
+            } else {
+                // If file missing, clear session
+                sessionState.value = { filePath: null, cursor: 0 }
+            }
+        }).catch(() => { /* ignore */ })
+    }
         // Handle file opened via file association (double-click, right-click → Open with)
         window.electronAPI.onOpenFile((data) => {
             if (data && data.content !== undefined) {
                 markdownContent.value = data.content
                 currentFilePath.value = data.filePath
                 isModified.value = false
+
+                if (restoreSessionEnabled.value) {
+                    sessionState.value = {
+                        filePath: data.filePath,
+                        cursor: lastCursorIndex.value || 0,
+                    }
+                }
 
                 if (tiptapEditor.value) {
                     isUpdatingFromMarkdown.value = true
@@ -594,15 +607,15 @@ function handleKeyDown(e) {
     // Shortcut per formattazione
     if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
         e.preventDefault()
-        formatBold()
+        handleToolbarAction('bold')
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
         e.preventDefault()
-        formatItalic()
+        handleToolbarAction('italic')
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
         e.preventDefault()
-        formatUnderline()
+        handleToolbarAction('underline')
     }
 }
 
@@ -615,182 +628,38 @@ onUnmounted(() => {
     if (tiptapEditor.value) {
         tiptapEditor.value.destroy()
     }
+    // Persist session on close if enabled
+    try {
+        if (restoreSessionEnabled.value) {
+            sessionState.value = {
+                filePath: currentFilePath.value || null,
+                cursor: lastCursorIndex.value || 0,
+            }
+        }
+    } catch (_) {}
 })
 </script>
 
 <template>
     <div class="h-screen flex flex-col bg-gray-900 text-gray-100">
-        <!-- Title bar with file info -->
-        <div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
-            <div class="flex items-center space-x-2">
-                <!-- <span class="text-xl font-bold text-blue-400">{{ t('app.title') }}</span> -->
-                <span class="text-xl font-bold text-blue-400"></span>
-                <span v-if="currentFilePath" class="text-sm text-gray-400 ml-4">
-                    {{ currentFilePath }}
-                </span>
-                <span v-else class="text-sm text-gray-400 ml-4">
-                    {{ t('file.untitled') }}
-                </span>
-                <span v-if="isModified" class="text-yellow-400 text-sm ml-2">●</span>
-            </div>
-        </div>
-
-        <!-- Formatting Toolbar -->
-        <div class="flex items-center px-2 py-1.5 bg-gray-800 border-b border-gray-700 gap-2 flex-wrap">
-            <!-- Headers -->
-            <div class="flex items-center gap-1 border-r border-gray-600 pr-3 mr-2">
-                <button @click="formatH1" class="toolbar-btn" :title="t('toolbar.h1')">H1</button>
-                <button @click="formatH2" class="toolbar-btn" :title="t('toolbar.h2')">H2</button>
-                <button @click="formatH3" class="toolbar-btn" :title="t('toolbar.h3')">H3</button>
-                <button @click="formatH4" class="toolbar-btn" :title="t('toolbar.h4')">H4</button>
-            </div>
-
-            <!-- Text formatting -->
-            <div class="flex items-center gap-1 border-r border-gray-600 pr-3 mr-2">
-                <button @click="formatBold" class="toolbar-btn font-bold" :title="t('toolbar.bold')">B</button>
-                <button @click="formatItalic" class="toolbar-btn italic" :title="t('toolbar.italic')">I</button>
-                <button @click="formatUnderline" class="toolbar-btn underline"
-                    :title="t('toolbar.underline')">U</button>
-                <button @click="formatStrikethrough" class="toolbar-btn line-through"
-                    :title="t('toolbar.strike')">S</button>
-            </div>
-
-            <!-- Code -->
-            <div class="flex items-center gap-1 border-r border-gray-600 pr-3 mr-2">
-                <button @click="formatCode" class="toolbar-btn font-mono text-xs"
-                    :title="t('toolbar.code')">&lt;/&gt;</button>
-                <button @click="formatCodeBlock" class="toolbar-btn font-mono text-xs" :title="t('toolbar.codeBlock')">{
-                    }</button>
-            </div>
-
-            <!-- Lists -->
-            <div class="flex items-center gap-1 border-r border-gray-600 pr-3 mr-2">
-                <button @click="formatBulletList" class="toolbar-btn" :title="t('toolbar.bulletList')">UL</button>
-                <button @click="formatNumberedList" class="toolbar-btn" :title="t('toolbar.numberedList')">OL</button>
-                <button @click="formatTaskList" class="toolbar-btn" :title="t('toolbar.taskList')">[ ]</button>
-            </div>
-
-            <!-- Other elements -->
-            <div class="flex items-center gap-1 border-r border-gray-600 pr-3 mr-2">
-                <button @click="formatBlockquote" class="toolbar-btn" :title="t('toolbar.blockquote')">""</button>
-                <button @click="formatLink" class="toolbar-btn" :title="t('toolbar.link')">Link</button>
-                <button @click="formatImage" class="toolbar-btn" :title="t('toolbar.image')">Img</button>
-            </div>
-
-            <!-- Extras -->
-            <div class="flex items-center gap-1">
-                <button @click="formatHorizontalRule" class="toolbar-btn" :title="t('toolbar.hr')">HR</button>
-                <button @click="formatTable" class="toolbar-btn" :title="t('toolbar.table')">Table</button>
-            </div>
-        </div>
-
-        <!-- Main content area -->
+        <TitleBar :currentFilePath="currentFilePath" :isModified="isModified" :untitledLabel="t('file.untitled')" />
+        <Toolbar :titles="toolbarTitles" @action="handleToolbarAction" />
         <div class="flex-1 flex overflow-hidden">
-            <!-- Editor panel (raw markdown) - Visibile in split e raw -->
-            <div v-show="viewMode === 'split' || viewMode === 'raw'" :class="viewMode === 'split' ? 'w-1/2' : 'w-full'"
-                class="flex flex-col border-r border-gray-700 transition-all duration-300">
-                <div class="px-4 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-300">Editor Markdown</span>
-                    <span class="text-xs text-gray-500">{{ markdownContent.length }} caratteri</span>
-                </div>
-                <textarea ref="editorRef" v-model="markdownContent"
-                    class="flex-1 w-full p-4 bg-gray-900 text-gray-100 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
-                    :placeholder="t('editor.placeholder')" spellcheck="false"></textarea>
-            </div>
-
-            <!-- Preview panel - Solo lettura in split -->
-            <div v-show="viewMode === 'split'" class="w-1/2 flex flex-col transition-all duration-300">
-                <div class="px-4 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-300">{{ t('preview.title') }}</span>
-                    <span class="text-xs text-gray-500">{{ t('preview.readonly') }}</span>
-                </div>
-                <div class="flex-1 p-6 overflow-auto bg-white prose prose-lg max-w-none" v-html="renderedMarkdown">
-                </div>
-            </div>
-
-            <!-- WYSIWYG panel - Tiptap Editor -->
-            <div v-show="viewMode === 'preview'" class="w-full flex flex-col transition-all duration-300">
-                <div class="px-4 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-300">Editor WYSIWYG</span>
-                    <span class="text-xs text-green-400">Modifica visuale</span>
-                </div>
-                <div class="flex-1 overflow-auto bg-white tiptap-wrapper">
-                    <EditorContent :editor="tiptapEditor" class="h-full" />
-                </div>
+            <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('preview.title')" @select="handleOutlineSelect" />
+            <div class="flex-1 flex overflow-hidden">
+                <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"
+                    :class="viewMode === 'split' ? 'w-1/2' : 'w-full'"
+                    ref="markdownEditorRef" v-model="markdownContent" :placeholder="t('editor.placeholder')" @cursor="handleCursor" />
+                <PreviewPane ref="previewPaneRef" v-show="viewMode === 'split'" :html="renderedMarkdown" :title="t('preview.title')"
+                    :readonlyLabel="t('preview.readonly')" />
+                <WysiwygEditor v-show="viewMode === 'preview'" :editor="tiptapEditor" />
             </div>
         </div>
-
-        <!-- Status bar -->
-        <div
-            class="flex items-center justify-between px-4 py-1.5 bg-gray-800 border-t border-gray-700 text-xs text-gray-400">
-            <div class="flex items-center space-x-4">
-                <span>{{ t('status.markdown') }}</span>
-                <span>{{ t('status.encoding') }}</span>
-            </div>
-
-            <!-- View mode controls -->
-            <div class="flex items-center space-x-1">
-                <button @click="viewMode = 'raw'" class="p-1.5 rounded transition-colors hover:bg-gray-700"
-                    :class="viewMode === 'raw' ? 'text-blue-400' : 'text-gray-400'" :title="t('toolbar.viewRaw')">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
-                </button>
-
-                <button @click="viewMode = 'split'" class="p-1.5 rounded transition-colors hover:bg-gray-700"
-                    :class="viewMode === 'split' ? 'text-blue-400' : 'text-gray-400'" :title="t('toolbar.viewSplit')">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 4H5a2 2 0 00-2 2v14a2 2 0 002 2h4m0-18v18m0-18l10 0a2 2 0 012 2v14a2 2 0 01-2 2h-10" />
-                    </svg>
-                </button>
-
-                <button @click="viewMode = 'preview'" class="p-1.5 rounded transition-colors hover:bg-gray-700"
-                    :class="viewMode === 'preview' ? 'text-blue-400' : 'text-gray-400'"
-                    :title="t('toolbar.viewPreview')">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Language selector moved to the right (see stats block) -->
-
-            <div class="flex items-center space-x-4">
-                <span>{{ markdownContent.split('\n').length }} {{ t('stats.lines') }}</span>
-                <span>{{markdownContent.split(/\s+/).filter(w => w).length}} {{ t('stats.words') }}</span>
-
-                <div class="relative">
-                    <button @click="showLangMenu = !showLangMenu"
-                        class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-700"
-                        :title="t('toolbar.viewPreview')">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M2 12h20M12 2c3.5 3.5 3.5 17 0 20M12 2C8.5 5.5 8.5 18.5 12 22" />
-                        </svg>
-                        <span class="text-xs text-gray-300">{{ locale }}</span>
-                    </button>
-
-                    <div v-show="showLangMenu"
-                        class="absolute right-0 bottom-full mb-2 w-40 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
-                        <ul>
-                            <li v-for="lang in languages" :key="lang.code">
-                                <button @click="setLanguage(lang.code)"
-                                    class="w-full text-left px-3 py-2 hover:bg-gray-700">
-                                    {{ lang.label }}
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <StatusBar :markdownContent="markdownContent" :viewMode="viewMode" :locale="locale.value" :languages="languages"
+            :showLangMenu="showLangMenu" :showOutline="showOutline" :restoreSessionEnabled="restoreSessionEnabled.value"
+            :text="statusText" @update:viewMode="mode => viewMode = mode"
+            @toggleLangMenu="showLangMenu = !showLangMenu" @selectLanguage="setLanguage" @toggleOutline="showOutline = !showOutline"
+            @toggleRestoreSession="restoreSessionEnabled.value = !restoreSessionEnabled.value" />
     </div>
 </template>
 
@@ -818,36 +687,7 @@ textarea::-webkit-scrollbar-thumb:hover {
     background: #6b7280;
 }
 
-/* Toolbar button styles */
-.toolbar-btn {
-    @apply px-3 py-1.5 text-sm font-medium bg-gray-700 hover:bg-gray-600 active:bg-blue-600 rounded transition-all min-w-[36px] text-center shadow-sm hover:shadow-md border border-gray-600 hover:border-gray-500;
-}
-
-.toolbar-btn:active {
-    @apply transform scale-95;
-}
-
-/* Tiptap wrapper */
-.tiptap-wrapper {
-    cursor: text;
-}
-
-.tiptap-wrapper::-webkit-scrollbar {
-    width: 10px;
-}
-
-.tiptap-wrapper::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-
-.tiptap-wrapper::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 5px;
-}
-
-.tiptap-wrapper::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
+/* Toolbar styles moved to Toolbar component; tiptap wrapper styles moved to WysiwygEditor component */
 </style>
 
 <style>
