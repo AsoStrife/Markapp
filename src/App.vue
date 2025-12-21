@@ -173,9 +173,21 @@ const activeEditor = computed(() => {
 })
 
 // Computed per il rendering del markdown (per split view)
+// Render preview HTML with block range wrappers to map cursor indices
 const renderedMarkdown = computed(() => {
     try {
-        return marked(markdownContent.value)
+        const md = markdownContent.value || ''
+        const tokens = marked.lexer(md)
+        let offset = 0
+        const parts = []
+        for (const token of tokens) {
+            const start = offset
+            const raw = token.raw || ''
+            offset += raw.length
+            const html = marked.parser([token])
+            parts.push(`<div class="md-block" data-start="${start}" data-end="${offset}">${html}</div>`)
+        }
+        return parts.join('')
     } catch (err) {
         return `<p class="text-red-500">${t('alerts.renderError')}</p>`
     }
@@ -216,7 +228,8 @@ const tiptapEditor = useEditor({
             placeholder: t('editor.placeholder'),
         }),
     ],
-    content: renderedMarkdown.value,
+    // Initialize with plain HTML without range wrappers
+    content: marked(markdownContent.value),
     editorProps: {
         attributes: {
             class: 'prose prose-lg max-w-none focus:outline-none min-h-full p-6',
@@ -233,6 +246,13 @@ const tiptapEditor = useEditor({
         isUpdatingFromTiptap.value = false
     },
 })
+const previewPaneRef = ref(null)
+
+function handleCursor(index) {
+    if (viewMode.value === 'split' && previewPaneRef.value && typeof index === 'number') {
+        previewPaneRef.value.highlightByIndex(index)
+    }
+}
 
 // Watch per sincronizzare markdown → Tiptap
 watch(markdownContent, (newValue) => {
@@ -511,12 +531,12 @@ onUnmounted(() => {
         <div class="flex-1 flex overflow-hidden">
             <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"
                 :class="viewMode === 'split' ? 'w-1/2' : 'w-full'"
-                ref="markdownEditorRef" v-model="markdownContent" :placeholder="t('editor.placeholder')" />
-            <PreviewPane v-show="viewMode === 'split'" :html="renderedMarkdown" :title="t('preview.title')"
+                ref="markdownEditorRef" v-model="markdownContent" :placeholder="t('editor.placeholder')" @cursor="handleCursor" />
+            <PreviewPane ref="previewPaneRef" v-show="viewMode === 'split'" :html="renderedMarkdown" :title="t('preview.title')"
                 :readonlyLabel="t('preview.readonly')" />
             <WysiwygEditor v-show="viewMode === 'preview'" :editor="tiptapEditor" />
         </div>
-        <StatusBar :markdownContent="markdownContent" :viewMode="viewMode" :locale="locale" :languages="languages"
+        <StatusBar :markdownContent="markdownContent" :viewMode="viewMode" :locale="locale.value" :languages="languages"
             :showLangMenu="showLangMenu" :text="statusText" @update:viewMode="mode => viewMode = mode"
             @toggleLangMenu="showLangMenu = !showLangMenu" @selectLanguage="setLanguage" />
     </div>

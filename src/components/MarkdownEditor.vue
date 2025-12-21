@@ -6,7 +6,7 @@ const props = defineProps({
   placeholder: { type: String, default: '' },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'cursor'])
 
 const content = ref(props.modelValue)
 const textareaRef = ref(null)
@@ -14,6 +14,11 @@ const textareaRef = ref(null)
 watch(() => props.modelValue, (v) => { content.value = v })
 
 function update(v) { content.value = v; emit('update:modelValue', v) }
+function emitCursor() {
+  const textarea = textareaRef.value
+  if (!textarea) return
+  emit('cursor', textarea.selectionStart)
+}
 
 function getSelection() {
   const textarea = textareaRef.value
@@ -103,7 +108,7 @@ defineExpose({
       <span class="text-sm font-medium text-gray-300">Editor Markdown</span>
       <span class="text-xs text-gray-500">{{ content.length }} caratteri</span>
     </div>
-    <textarea ref="textareaRef" :value="content" @input="update($event.target.value)"
+    <textarea ref="textareaRef" :value="content" @input="update($event.target.value)" @click="emitCursor" @mouseup="emitCursor" @keyup="emitCursor"
       class="flex-1 w-full p-4 bg-gray-900 text-gray-100 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
       :placeholder="props.placeholder" spellcheck="false"></textarea>
   </div>
