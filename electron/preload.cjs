@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saveFile: (filePath, content) => ipcRenderer.invoke('save-file', { filePath, content }),
     saveFileDialog: (content) => ipcRenderer.invoke('save-file-dialog', { content }),
     openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
+    openFileByPath: (filePath) => ipcRenderer.invoke('open-file-by-path', { filePath }),
     getCurrentFilePath: () => ipcRenderer.invoke('get-current-file-path'),
 
     // Listener per eventi dal menu

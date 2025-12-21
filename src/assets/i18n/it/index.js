@@ -6,6 +6,10 @@ export default {
         markdown: 'Markdown',
         encoding: 'UTF-8'
     },
+    settings: {
+        menu: 'Impostazioni',
+        restoreSession: 'Ripristina ultima sessione'
+    },
     file: {
         untitled: 'Senza titolo',
         menu: 'File',

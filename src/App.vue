@@ -104,6 +104,9 @@ const markdownEditorRef = ref(null)
 const isUpdatingFromTiptap = ref(false)
 const isUpdatingFromMarkdown = ref(false)
 const showOutline = ref(true)
+const restoreSessionEnabled = useLocalStorage('markapp.restoreSession', true)
+const sessionState = useLocalStorage('markapp.session', { filePath: null, cursor: 0 })
+const lastCursorIndex = ref(0)
 
 // UI texts
 const toolbarTitles = computed(() => ({
@@ -136,6 +139,8 @@ const statusText = computed(() => ({
     viewSplit: t('toolbar.viewSplit'),
     viewPreview: t('toolbar.viewPreview'),
     outline: 'Outline',
+    settings: t('settings.menu'),
+    restoreSession: t('settings.restoreSession'),
 }))
 
 // Configurazione Turndown per HTML→Markdown
@@ -275,6 +280,15 @@ const previewPaneRef = ref(null)
 function handleCursor(index) {
     if (viewMode.value === 'split' && previewPaneRef.value && typeof index === 'number') {
         previewPaneRef.value.highlightByIndex(index)
+    }
+    if (typeof index === 'number') {
+        lastCursorIndex.value = index
+        if (restoreSessionEnabled.value) {
+            sessionState.value = {
+                filePath: currentFilePath.value || null,
+                cursor: index,
+            }
+        }
     }
 }
 
@@ -428,6 +442,13 @@ async function handleOpen() {
         currentFilePath.value = result.filePath
         isModified.value = false
 
+        if (restoreSessionEnabled.value) {
+            sessionState.value = {
+                filePath: result.filePath,
+                cursor: lastCursorIndex.value || 0,
+            }
+        }
+
         // Aggiorna anche Tiptap
         if (tiptapEditor.value) {
             isUpdatingFromMarkdown.value = true
@@ -446,6 +467,10 @@ function handleNew() {
     markdownContent.value = newContent
     currentFilePath.value = null
     isModified.value = false
+
+    if (restoreSessionEnabled.value) {
+        sessionState.value = { filePath: null, cursor: 0 }
+    }
 
     // Aggiorna anche Tiptap
     if (tiptapEditor.value) {
@@ -483,6 +508,13 @@ onMounted(() => {
             currentFilePath.value = data.filePath
             isModified.value = false
 
+            if (restoreSessionEnabled.value) {
+                sessionState.value = {
+                    filePath: data.filePath,
+                    cursor: lastCursorIndex.value || 0,
+                }
+            }
+
             if (tiptapEditor.value) {
                 isUpdatingFromMarkdown.value = true
                 const html = marked(data.content)
@@ -499,12 +531,49 @@ onMounted(() => {
             handleSaveAs()
         })
 
+
+    // Attempt session restore on startup if enabled
+    if (restoreSessionEnabled.value && sessionState.value && sessionState.value.filePath && window.electronAPI && window.electronAPI.openFileByPath) {
+        window.electronAPI.openFileByPath(sessionState.value.filePath).then((result) => {
+            if (result && result.success) {
+                markdownContent.value = result.content
+                currentFilePath.value = result.filePath
+                isModified.value = false
+
+                if (tiptapEditor.value) {
+                    isUpdatingFromMarkdown.value = true
+                    const html = marked(result.content)
+                    tiptapEditor.value.commands.setContent(html, false)
+                    isUpdatingFromMarkdown.value = false
+                }
+
+                // Jump to last cursor index (clamped)
+                const idx = Math.max(0, Math.min(sessionState.value.cursor || 0, (result.content || '').length))
+                // Ensure editor is mounted before jumping
+                setTimeout(() => {
+                    if (markdownEditorRef.value) {
+                        markdownEditorRef.value.jumpToIndex(idx)
+                    }
+                }, 50)
+            } else {
+                // If file missing, clear session
+                sessionState.value = { filePath: null, cursor: 0 }
+            }
+        }).catch(() => { /* ignore */ })
+    }
         // Handle file opened via file association (double-click, right-click → Open with)
         window.electronAPI.onOpenFile((data) => {
             if (data && data.content !== undefined) {
                 markdownContent.value = data.content
                 currentFilePath.value = data.filePath
                 isModified.value = false
+
+                if (restoreSessionEnabled.value) {
+                    sessionState.value = {
+                        filePath: data.filePath,
+                        cursor: lastCursorIndex.value || 0,
+                    }
+                }
 
                 if (tiptapEditor.value) {
                     isUpdatingFromMarkdown.value = true
@@ -559,6 +628,15 @@ onUnmounted(() => {
     if (tiptapEditor.value) {
         tiptapEditor.value.destroy()
     }
+    // Persist session on close if enabled
+    try {
+        if (restoreSessionEnabled.value) {
+            sessionState.value = {
+                filePath: currentFilePath.value || null,
+                cursor: lastCursorIndex.value || 0,
+            }
+        }
+    } catch (_) {}
 })
 </script>
 
@@ -578,8 +656,10 @@ onUnmounted(() => {
             </div>
         </div>
         <StatusBar :markdownContent="markdownContent" :viewMode="viewMode" :locale="locale.value" :languages="languages"
-            :showLangMenu="showLangMenu" :showOutline="showOutline" :text="statusText" @update:viewMode="mode => viewMode = mode"
-            @toggleLangMenu="showLangMenu = !showLangMenu" @selectLanguage="setLanguage" @toggleOutline="showOutline = !showOutline" />
+            :showLangMenu="showLangMenu" :showOutline="showOutline" :restoreSessionEnabled="restoreSessionEnabled.value"
+            :text="statusText" @update:viewMode="mode => viewMode = mode"
+            @toggleLangMenu="showLangMenu = !showLangMenu" @selectLanguage="setLanguage" @toggleOutline="showOutline = !showOutline"
+            @toggleRestoreSession="restoreSessionEnabled.value = !restoreSessionEnabled.value" />
     </div>
 </template>
 

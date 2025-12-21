@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   markdownContent: { type: String, default: '' },
@@ -8,10 +8,11 @@ const props = defineProps({
   languages: { type: Array, default: () => [] },
   showLangMenu: { type: Boolean, default: false },
   showOutline: { type: Boolean, default: true },
-  text: { type: Object, default: () => ({ markdown: 'Markdown', encoding: 'UTF-8', lines: 'lines', words: 'words', outline: 'Outline', viewRaw: 'Raw', viewSplit: 'Split', viewPreview: 'Preview' }) },
+  restoreSessionEnabled: { type: Boolean, default: true },
+  text: { type: Object, default: () => ({ markdown: 'Markdown', encoding: 'UTF-8', lines: 'lines', words: 'words', outline: 'Outline', viewRaw: 'Raw', viewSplit: 'Split', viewPreview: 'Preview', settings: 'Settings', restoreSession: 'Restore last session' }) },
 })
 
-const emit = defineEmits(['update:viewMode', 'toggleLangMenu', 'selectLanguage', 'toggleOutline'])
+const emit = defineEmits(['update:viewMode', 'toggleLangMenu', 'selectLanguage', 'toggleOutline', 'toggleRestoreSession'])
 
 const lines = computed(() => props.markdownContent.split('\n').length)
 const words = computed(() => props.markdownContent.split(/\s+/).filter(w => w).length)
@@ -20,6 +21,10 @@ function setViewMode(mode) { emit('update:viewMode', mode) }
 function toggleLangMenu() { emit('toggleLangMenu') }
 function selectLanguage(code) { emit('selectLanguage', code) }
 function toggleOutline() { emit('toggleOutline') }
+function toggleRestoreSession() { emit('toggleRestoreSession') }
+
+const showSettingsMenu = ref(false)
+function toggleSettingsMenu() { showSettingsMenu.value = !showSettingsMenu.value }
 </script>
 
 <template>
@@ -66,6 +71,26 @@ function toggleOutline() { emit('toggleOutline') }
           <ul>
             <li v-for="lang in props.languages" :key="lang.code">
               <button @click="selectLanguage(lang.code)" class="w-full text-left px-3 py-2 hover:bg-gray-700">{{ lang.label }}</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="relative">
+        <button @click="toggleSettingsMenu" class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-700" :title="props.text.settings">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 01.35-1.954h2.65a1 1 0 01.35 1.954l-.563 1.126a7.97 7.97 0 012.084 1.206l1.126-.563a1 1 0 011.354.447l1.325 2.297a1 1 0 01-.447 1.354l-1.126.563c.139.676.212 1.379.212 2.094s-.073 1.418-.212 2.094l1.126.563a1 1 0 01.447 1.354l-1.325 2.297a1 1 0 01-1.354.447l-1.126-.563a7.97 7.97 0 01-2.084 1.206l.563 1.126a1 1 0 01-.35 1.954h-2.65a1 1 0 01-.35-1.954l.563-1.126a7.97 7.97 0 01-2.084-1.206l-1.126.563a1 1 0 01-1.354-.447L4.5 17.61a1 1 0 01.447-1.354l1.126-.563A7.987 7.987 0 015.86 13c0-.715.073-1.418.212-2.094l-1.126-.563A1 1 0 014.5 8.989l1.325-2.297a1 1 0 011.354-.447l1.126.563a7.97 7.97 0 012.084-1.206l-.563-1.126z" />
+          </svg>
+          <span class="text-xs text-gray-300">{{ props.text.settings }}</span>
+        </button>
+        <div v-show="showSettingsMenu" class="absolute right-0 bottom-full mb-2 w-56 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
+          <ul>
+            <li class="flex items-center justify-between px-3 py-2">
+              <span>{{ props.text.restoreSession }}</span>
+              <button @click="toggleRestoreSession" class="ml-2 inline-flex items-center w-10 h-5 rounded-full"
+                :class="props.restoreSessionEnabled ? 'bg-blue-600' : 'bg-gray-600'">
+                <span class="h-4 w-4 bg-white rounded-full transform transition"
+                  :class="props.restoreSessionEnabled ? 'translate-x-5' : 'translate-x-1'" />
+              </button>
             </li>
           </ul>
         </div>

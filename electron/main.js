@@ -256,6 +256,25 @@ ipcMain.handle('open-file-dialog', async () => {
     return { success: false, canceled: true }
 })
 
+// Allow renderer to open a specific file path (used for session restore)
+ipcMain.handle('open-file-by-path', async (event, { filePath }) => {
+    try {
+        if (!filePath || typeof filePath !== 'string') {
+            return { success: false, error: 'Invalid file path' }
+        }
+        const abs = path.resolve(filePath)
+        if (!fs.existsSync(abs)) {
+            return { success: false, error: 'File not found', notFound: true }
+        }
+        const content = fs.readFileSync(abs, 'utf-8')
+        currentFilePath = abs
+        updateWindowTitle(abs)
+        return { success: true, filePath: abs, content }
+    } catch (err) {
+        return { success: false, error: err && err.message ? err.message : String(err) }
+    }
+})
+
 app.whenReady().then(async () => {
     // Check if a .md file was passed as argument (double-click or context menu)
     pendingFileToOpen = getFilePathFromArgs()
