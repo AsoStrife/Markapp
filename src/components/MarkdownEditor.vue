@@ -80,6 +80,14 @@ function applyLink(url) {
 }
 function applyImage(url) { insertText('![alt text](', ')', url || 'https://') }
 
+function jumpToIndex(index) {
+  const textarea = textareaRef.value
+  if (!textarea || typeof index !== 'number') return
+  textarea.focus()
+  try { textarea.setSelectionRange(index, index) } catch (_) {}
+  emit('cursor', index)
+}
+
 defineExpose({
   formatBold,
   formatItalic,
@@ -99,6 +107,7 @@ defineExpose({
   formatTable,
   applyLink,
   applyImage,
+  jumpToIndex,
 })
 </script>
 

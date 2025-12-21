@@ -32,6 +32,7 @@ import MarkdownEditor from './components/MarkdownEditor.vue'
 import PreviewPane from './components/PreviewPane.vue'
 import WysiwygEditor from './components/WysiwygEditor.vue'
 import StatusBar from './components/StatusBar.vue'
+import OutlinePanel from './components/OutlinePanel.vue'
 
 // Configurazione lowlight per syntax highlighting
 const lowlight = createLowlight(common)
@@ -193,6 +194,27 @@ const renderedMarkdown = computed(() => {
     }
 })
 
+// Outline items from markdown headings
+const outlineItems = computed(() => {
+    try {
+        const md = markdownContent.value || ''
+        const tokens = marked.lexer(md)
+        let offset = 0
+        const items = []
+        for (const token of tokens) {
+            const start = offset
+            const raw = token.raw || ''
+            offset += raw.length
+            if (token.type === 'heading') {
+                items.push({ title: token.text || '', level: token.depth || 1, index: start })
+            }
+        }
+        return items
+    } catch (_) {
+        return []
+    }
+})
+
 // Tiptap Editor
 const tiptapEditor = useEditor({
     extensions: [
@@ -251,6 +273,20 @@ const previewPaneRef = ref(null)
 function handleCursor(index) {
     if (viewMode.value === 'split' && previewPaneRef.value && typeof index === 'number') {
         previewPaneRef.value.highlightByIndex(index)
+    }
+}
+
+function handleOutlineSelect(index) {
+    if (typeof index !== 'number') return
+    if (viewMode.value === 'preview') {
+        // Switch to split to show preview alongside editor for jumping
+        viewMode.value = 'split'
+    }
+    if (previewPaneRef.value) {
+        previewPaneRef.value.highlightByIndex(index)
+    }
+    if (markdownEditorRef.value) {
+        markdownEditorRef.value.jumpToIndex(index)
     }
 }
 
@@ -529,12 +565,15 @@ onUnmounted(() => {
         <TitleBar :currentFilePath="currentFilePath" :isModified="isModified" :untitledLabel="t('file.untitled')" />
         <Toolbar :titles="toolbarTitles" @action="handleToolbarAction" />
         <div class="flex-1 flex overflow-hidden">
-            <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"
-                :class="viewMode === 'split' ? 'w-1/2' : 'w-full'"
-                ref="markdownEditorRef" v-model="markdownContent" :placeholder="t('editor.placeholder')" @cursor="handleCursor" />
-            <PreviewPane ref="previewPaneRef" v-show="viewMode === 'split'" :html="renderedMarkdown" :title="t('preview.title')"
-                :readonlyLabel="t('preview.readonly')" />
-            <WysiwygEditor v-show="viewMode === 'preview'" :editor="tiptapEditor" />
+            <OutlinePanel :items="outlineItems" :title="t('preview.title')" @select="handleOutlineSelect" />
+            <div class="flex-1 flex overflow-hidden">
+                <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"
+                    :class="viewMode === 'split' ? 'w-1/2' : 'w-full'"
+                    ref="markdownEditorRef" v-model="markdownContent" :placeholder="t('editor.placeholder')" @cursor="handleCursor" />
+                <PreviewPane ref="previewPaneRef" v-show="viewMode === 'split'" :html="renderedMarkdown" :title="t('preview.title')"
+                    :readonlyLabel="t('preview.readonly')" />
+                <WysiwygEditor v-show="viewMode === 'preview'" :editor="tiptapEditor" />
+            </div>
         </div>
         <StatusBar :markdownContent="markdownContent" :viewMode="viewMode" :locale="locale.value" :languages="languages"
             :showLangMenu="showLangMenu" :text="statusText" @update:viewMode="mode => viewMode = mode"
