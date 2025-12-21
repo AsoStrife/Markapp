@@ -1,10 +1,7 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue'
-
 const props = defineProps({
   titles: { type: Object, default: () => ({}) },
 })
-
 const emit = defineEmits(['action'])
 
 function trigger(act) {

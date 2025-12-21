@@ -1,5 +1,4 @@
 <script setup>
-import { defineProps } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 
 const props = defineProps({ editor: { type: Object, default: null } })

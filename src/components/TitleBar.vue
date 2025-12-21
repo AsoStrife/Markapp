@@ -1,6 +1,4 @@
 <script setup>
-import { defineProps } from 'vue'
-
 const props = defineProps({
   currentFilePath: { type: String, default: null },
   isModified: { type: Boolean, default: false },
