@@ -9,6 +9,40 @@ let mainWindow
 let currentFilePath = null
 let messages = { it: null, en: null }
 let appLocale = 'en'
+let pendingFileToOpen = null
+
+// Extract .md file path from process.argv, filtering out Electron/Squirrel flags
+function getFilePathFromArgs() {
+    const args = process.argv.slice(1) // Skip electron executable
+    for (const arg of args) {
+        // Ignore flags and non-file arguments
+        if (arg.startsWith('--') || arg.startsWith('-')) continue
+        if (arg === '.' || arg === 'electron/main.js') continue
+        
+        // Check if it's a .md file
+        if (arg.toLowerCase().endsWith('.md') && fs.existsSync(arg)) {
+            return path.resolve(arg)
+        }
+    }
+    return null
+}
+
+// Centralized function to open a file and send to renderer
+function openFileInRenderer(filePath) {
+    if (!filePath || !fs.existsSync(filePath)) return
+    
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8')
+        currentFilePath = filePath
+        
+        if (mainWindow && mainWindow.webContents) {
+            updateWindowTitle(filePath)
+            mainWindow.webContents.send('open-file', { filePath, content })
+        }
+    } catch (err) {
+        console.error('Error opening file:', err)
+    }
+}
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -146,6 +180,14 @@ function createWindow() {
     mainWindow.on('closed', () => {
         mainWindow = null
     })
+    
+    // Handle pending file after window finishes loading
+    mainWindow.webContents.on('did-finish-load', () => {
+        if (pendingFileToOpen) {
+            openFileInRenderer(pendingFileToOpen)
+            pendingFileToOpen = null
+        }
+    })
 }
 
 function updateWindowTitle(filePath) {
@@ -215,6 +257,9 @@ ipcMain.handle('open-file-dialog', async () => {
 })
 
 app.whenReady().then(async () => {
+    // Check if a .md file was passed as argument (double-click or context menu)
+    pendingFileToOpen = getFilePathFromArgs()
+    
     // Carica i file di traduzione delle UI da build (Vite) o dalla sorgente usando import dinamico ESM
     try {
         const itPath = path.join(__dirname, '../src/assets/i18n/it/index.js')

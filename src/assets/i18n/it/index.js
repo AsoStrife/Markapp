@@ -7,7 +7,13 @@ export default {
         encoding: 'UTF-8'
     },
     file: {
-        untitled: 'Senza titolo'
+        untitled: 'Senza titolo',
+        menu: 'File',
+        new: 'Nuovo',
+        open: 'Apri...',
+        save: 'Salva',
+        saveAs: 'Salva con nome...',
+        quit: 'Esci'
     },
     editor: {
         markdown: 'Editor Markdown',
@@ -42,14 +48,7 @@ export default {
         viewSplit: 'Vista Split',
         viewPreview: 'Vista WYSIWYG'
     },
-    file: {
-        menu: 'File',
-        new: 'Nuovo',
-        open: 'Apri...',
-        save: 'Salva',
-        saveAs: 'Salva con nome...',
-        quit: 'Esci'
-    },
+    
     edit: {
         menu: 'Modifica',
         undo: 'Annulla',
