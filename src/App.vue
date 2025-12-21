@@ -103,6 +103,7 @@ const viewMode = ref('split') // 'split', 'raw', 'preview'
 const markdownEditorRef = ref(null)
 const isUpdatingFromTiptap = ref(false)
 const isUpdatingFromMarkdown = ref(false)
+const showOutline = ref(true)
 
 // UI texts
 const toolbarTitles = computed(() => ({
@@ -134,6 +135,7 @@ const statusText = computed(() => ({
     viewRaw: t('toolbar.viewRaw'),
     viewSplit: t('toolbar.viewSplit'),
     viewPreview: t('toolbar.viewPreview'),
+    outline: 'Outline',
 }))
 
 // Configurazione Turndown per HTML→Markdown
@@ -565,7 +567,7 @@ onUnmounted(() => {
         <TitleBar :currentFilePath="currentFilePath" :isModified="isModified" :untitledLabel="t('file.untitled')" />
         <Toolbar :titles="toolbarTitles" @action="handleToolbarAction" />
         <div class="flex-1 flex overflow-hidden">
-            <OutlinePanel :items="outlineItems" :title="t('preview.title')" @select="handleOutlineSelect" />
+            <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('preview.title')" @select="handleOutlineSelect" />
             <div class="flex-1 flex overflow-hidden">
                 <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"
                     :class="viewMode === 'split' ? 'w-1/2' : 'w-full'"
@@ -576,8 +578,8 @@ onUnmounted(() => {
             </div>
         </div>
         <StatusBar :markdownContent="markdownContent" :viewMode="viewMode" :locale="locale.value" :languages="languages"
-            :showLangMenu="showLangMenu" :text="statusText" @update:viewMode="mode => viewMode = mode"
-            @toggleLangMenu="showLangMenu = !showLangMenu" @selectLanguage="setLanguage" />
+            :showLangMenu="showLangMenu" :showOutline="showOutline" :text="statusText" @update:viewMode="mode => viewMode = mode"
+            @toggleLangMenu="showLangMenu = !showLangMenu" @selectLanguage="setLanguage" @toggleOutline="showOutline = !showOutline" />
     </div>
 </template>
 

@@ -7,10 +7,11 @@ const props = defineProps({
   locale: { type: String, default: 'en' },
   languages: { type: Array, default: () => [] },
   showLangMenu: { type: Boolean, default: false },
-  text: { type: Object, default: () => ({ markdown: 'Markdown', encoding: 'UTF-8', lines: 'lines', words: 'words' }) },
+  showOutline: { type: Boolean, default: true },
+  text: { type: Object, default: () => ({ markdown: 'Markdown', encoding: 'UTF-8', lines: 'lines', words: 'words', outline: 'Outline', viewRaw: 'Raw', viewSplit: 'Split', viewPreview: 'Preview' }) },
 })
 
-const emit = defineEmits(['update:viewMode', 'toggleLangMenu', 'selectLanguage'])
+const emit = defineEmits(['update:viewMode', 'toggleLangMenu', 'selectLanguage', 'toggleOutline'])
 
 const lines = computed(() => props.markdownContent.split('\n').length)
 const words = computed(() => props.markdownContent.split(/\s+/).filter(w => w).length)
@@ -18,6 +19,7 @@ const words = computed(() => props.markdownContent.split(/\s+/).filter(w => w).l
 function setViewMode(mode) { emit('update:viewMode', mode) }
 function toggleLangMenu() { emit('toggleLangMenu') }
 function selectLanguage(code) { emit('selectLanguage', code) }
+function toggleOutline() { emit('toggleOutline') }
 </script>
 
 <template>
@@ -48,6 +50,8 @@ function selectLanguage(code) { emit('selectLanguage', code) }
       </button>
     </div>
     <div class="flex items-center space-x-4">
+      <button @click="toggleOutline" class="px-2 py-1 rounded transition-colors hover:bg-gray-700"
+        :class="props.showOutline ? 'text-blue-400' : 'text-gray-400'" :title="props.text.outline">{{ props.text.outline }}</button>
       <span>{{ lines }} {{ props.text.lines }}</span>
       <span>{{ words }} {{ props.text.words }}</span>
       <div class="relative">
