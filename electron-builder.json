@@ -1,0 +1,38 @@
+{
+    "appId": "com.markapp.app",
+    "productName": "Markapp",
+    "directories": {
+        "output": "release",
+        "buildResources": "build"
+    },
+    "files": [
+        "dist/**/*",
+        "electron/**/*"
+    ],
+    "extraMetadata": {
+        "main": "electron/main.js"
+    },
+    "win": {
+        "target": [
+            "nsis",
+            "portable"
+        ],
+        "icon": "build/icons/icon.ico"
+    },
+    "mac": {
+        "target": [
+            "dmg",
+            "zip"
+        ],
+        "icon": "build/icons/icon.icns",
+        "category": "public.app-category.productivity"
+    },
+    "linux": {
+        "target": [
+            "AppImage",
+            "deb"
+        ],
+        "icon": "build/icons/icon.png",
+        "category": "Utility"
+    }
+}
