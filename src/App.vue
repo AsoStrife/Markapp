@@ -490,8 +490,6 @@ onMounted(() => {
                 if (mainLocale && mainLocale !== locale.value) {
                     locale.value = mainLocale
                     storedLocale.value = mainLocale
-                    // update welcome content to match
-                    markdownContent.value = mainLocale === 'it' ? welcomeIt : welcomeEn
                 }
             }).catch(() => { /* ignore */ })
         }
@@ -532,35 +530,35 @@ onMounted(() => {
         })
 
 
-    // Attempt session restore on startup if enabled
-    if (restoreSessionEnabled.value && sessionState.value && sessionState.value.filePath && window.electronAPI && window.electronAPI.openFileByPath) {
-        window.electronAPI.openFileByPath(sessionState.value.filePath).then((result) => {
-            if (result && result.success) {
-                markdownContent.value = result.content
-                currentFilePath.value = result.filePath
-                isModified.value = false
+        // Attempt session restore on startup if enabled
+        if (restoreSessionEnabled.value && sessionState.value && sessionState.value.filePath && window.electronAPI && window.electronAPI.openFileByPath) {
+            window.electronAPI.openFileByPath(sessionState.value.filePath).then((result) => {
+                if (result && result.success) {
+                    markdownContent.value = result.content
+                    currentFilePath.value = result.filePath
+                    isModified.value = false
 
-                if (tiptapEditor.value) {
-                    isUpdatingFromMarkdown.value = true
-                    const html = marked(result.content)
-                    tiptapEditor.value.commands.setContent(html, false)
-                    isUpdatingFromMarkdown.value = false
-                }
-
-                // Jump to last cursor index (clamped)
-                const idx = Math.max(0, Math.min(sessionState.value.cursor || 0, (result.content || '').length))
-                // Ensure editor is mounted before jumping
-                setTimeout(() => {
-                    if (markdownEditorRef.value) {
-                        markdownEditorRef.value.jumpToIndex(idx)
+                    if (tiptapEditor.value) {
+                        isUpdatingFromMarkdown.value = true
+                        const html = marked(result.content)
+                        tiptapEditor.value.commands.setContent(html, false)
+                        isUpdatingFromMarkdown.value = false
                     }
-                }, 50)
-            } else {
-                // If file missing, clear session
-                sessionState.value = { filePath: null, cursor: 0 }
-            }
-        }).catch(() => { /* ignore */ })
-    }
+
+                    // Jump to last cursor index (clamped)
+                    const idx = Math.max(0, Math.min(sessionState.value.cursor || 0, (result.content || '').length))
+                    // Ensure editor is mounted before jumping
+                    setTimeout(() => {
+                        if (markdownEditorRef.value) {
+                            markdownEditorRef.value.jumpToIndex(idx)
+                        }
+                    }, 50)
+                } else {
+                    // If file missing, clear session
+                    sessionState.value = { filePath: null, cursor: 0 }
+                }
+            }).catch(() => { /* ignore */ })
+        }
         // Handle file opened via file association (double-click, right-click → Open with)
         window.electronAPI.onOpenFile((data) => {
             if (data && data.content !== undefined) {
@@ -636,7 +634,7 @@ onUnmounted(() => {
                 cursor: lastCursorIndex.value || 0,
             }
         }
-    } catch (_) {}
+    } catch (_) { }
 })
 </script>
 
@@ -645,20 +643,21 @@ onUnmounted(() => {
         <TitleBar :currentFilePath="currentFilePath" :isModified="isModified" :untitledLabel="t('file.untitled')" />
         <Toolbar :titles="toolbarTitles" @action="handleToolbarAction" />
         <div class="flex-1 flex overflow-hidden">
-            <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('preview.title')" @select="handleOutlineSelect" />
+            <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('preview.title')"
+                @select="handleOutlineSelect" />
             <div class="flex-1 flex overflow-hidden">
                 <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"
-                    :class="viewMode === 'split' ? 'w-1/2' : 'w-full'"
-                    ref="markdownEditorRef" v-model="markdownContent" :placeholder="t('editor.placeholder')" @cursor="handleCursor" />
-                <PreviewPane ref="previewPaneRef" v-show="viewMode === 'split'" :html="renderedMarkdown" :title="t('preview.title')"
-                    :readonlyLabel="t('preview.readonly')" />
+                    :class="viewMode === 'split' ? 'w-1/2' : 'w-full'" ref="markdownEditorRef" v-model="markdownContent"
+                    :placeholder="t('editor.placeholder')" @cursor="handleCursor" />
+                <PreviewPane ref="previewPaneRef" v-show="viewMode === 'split'" :html="renderedMarkdown"
+                    :title="t('preview.title')" :readonlyLabel="t('preview.readonly')" />
                 <WysiwygEditor v-show="viewMode === 'preview'" :editor="tiptapEditor" />
             </div>
         </div>
-        <StatusBar :markdownContent="markdownContent" :viewMode="viewMode" :locale="locale.value" :languages="languages"
+        <StatusBar :markdownContent="markdownContent" :viewMode="viewMode" :locale="locale" :languages="languages"
             :showLangMenu="showLangMenu" :showOutline="showOutline" :restoreSessionEnabled="restoreSessionEnabled.value"
-            :text="statusText" @update:viewMode="mode => viewMode = mode"
-            @toggleLangMenu="showLangMenu = !showLangMenu" @selectLanguage="setLanguage" @toggleOutline="showOutline = !showOutline"
+            :text="statusText" @update:viewMode="mode => viewMode = mode" @toggleLangMenu="showLangMenu = !showLangMenu"
+            @selectLanguage="setLanguage" @toggleOutline="showOutline = !showOutline"
             @toggleRestoreSession="restoreSessionEnabled.value = !restoreSessionEnabled.value" />
     </div>
 </template>
