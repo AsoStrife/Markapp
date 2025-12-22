@@ -43,36 +43,98 @@ function handleCancel() {
             </div>
 
             <!-- Content -->
-            <div class="px-6 py-6">
+            <div class="px-6 pt-6 pb-20">
                 <p class="text-gray-300 leading-relaxed">{{ message }}</p>
             </div>
 
-            <!-- Footer with buttons -->
-            <div class="px-6 pb-6 flex items-center justify-end gap-3">
-                <button @click="handleCancel"
-                    class="px-5 py-2.5 rounded-lg font-medium text-gray-300 bg-gray-700/50 hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-offset-2 focus:ring-offset-gray-800">
-                    {{ cancelLabel }}
-                </button>
-                <button @click="handleDontSave"
-                    class="px-5 py-2.5 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800">
-                    {{ dontSaveLabel }}
-                </button>
-                <button @click="handleSave"
-                    class="px-5 py-2.5 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800">
-                    {{ saveLabel }}
-                </button>
+            <!-- Minimal footbar: buttons small and placed on modal perimeter -->
+            <div class="absolute left-0 right-0 bottom-0">
+                <div class="flex items-center justify-between px-4 py-2 border-t border-gray-700 bg-transparent">
+                    <!-- Left: destructive action -->
+                    <div>
+                        <button @click="handleDontSave" class="btn-foot left">
+                            {{ dontSaveLabel }}
+                        </button>
+                    </div>
+
+                    <!-- Right: cancel (small) and save (primary) -->
+                    <div class="flex items-center gap-3">
+                        <button @click="handleCancel" class="btn-foot-cancel">
+                            {{ cancelLabel }}
+                        </button>
+                        <button @click="handleSave" class="btn-foot right">
+                            {{ saveLabel }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-/* Animazioni fluide */
-button {
-    transform: translateZ(0);
+/* Minimal footbar button styles */
+.btn-foot {
+    min-width: 76px;
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+    /* 13px */
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color .12s ease, transform .06s ease, border-color .12s ease;
 }
 
-button:active {
-    transform: scale(0.98);
+.btn-foot:active {
+    transform: scale(0.985);
 }
+
+.btn-foot.left {
+    color: #ef4444;
+    /* red-500 */
+}
+
+.btn-foot.left:hover {
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.btn-foot.center {
+    color: #d1d5db;
+    /* gray-300 */
+}
+
+.btn-foot.center:hover {
+    background: rgba(209, 213, 219, 0.04);
+}
+
+.btn-foot.right {
+    color: white;
+    background: #2563eb;
+    /* blue-600 */
+    border-color: rgba(37, 99, 235, 0.15);
+}
+
+.btn-foot.right:hover {
+    background: #1e4fd1;
+}
+
+/* Small cancel button on the right */
+.btn-foot-cancel {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    /* 12px */
+    border-radius: 6px;
+    background: transparent;
+    color: #9ca3af;
+    /* gray-400 */
+    border: 1px solid rgba(156, 163, 175, 0.08);
+    cursor: pointer;
+}
+
+.btn-foot-cancel:hover {
+    background: rgba(156, 163, 175, 0.04);
+}
+
+/* Ensure modal content isn't hidden behind footer */
 </style>
