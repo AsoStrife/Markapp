@@ -10,6 +10,8 @@ let currentFilePath = null
 let messages = { it: null, en: null }
 let appLocale = 'en'
 let pendingFileToOpen = null
+let isModified = false
+let closeRequested = false
 
 // Extract .md file path from process.argv, filtering out Electron/Squirrel flags
 function getFilePathFromArgs() {
@@ -181,6 +183,21 @@ function createWindow() {
         mainWindow = null
     })
 
+    // Handle close event to check for unsaved changes
+    mainWindow.on('close', (e) => {
+        if (closeRequested) {
+            // User already confirmed or saved, allow close
+            return
+        }
+
+        if (isModified) {
+            // Prevent default close behavior
+            e.preventDefault()
+            // Ask renderer to handle the unsaved changes dialog
+            mainWindow.webContents.send('before-close')
+        }
+    })
+
     // Handle pending file after window finishes loading
     mainWindow.webContents.on('did-finish-load', () => {
         if (pendingFileToOpen) {
@@ -327,6 +344,29 @@ app.whenReady().then(async () => {
     // Permette al renderer di richiedere la lingua corrente
     ipcMain.handle('get-app-locale', () => {
         return appLocale
+    })
+
+    // Track modified state from renderer
+    ipcMain.on('set-modified-state', (event, modified) => {
+        isModified = modified
+    })
+
+    // Handle close confirmation from renderer
+    ipcMain.on('confirm-close', (event, shouldSave) => {
+        if (shouldSave === 'cancel') {
+            // User cancelled, reset flags
+            closeRequested = false
+            isModified = true // Keep modified state
+        } else if (shouldSave === 'save') {
+            // User wants to save - trigger save and then close
+            mainWindow.webContents.send('file-save')
+            // The renderer will call confirm-close again with 'close' after save completes
+        } else {
+            // User chose 'don't save' or save completed ('close')
+            closeRequested = true
+            isModified = false
+            mainWindow.close()
+        }
     })
 
     app.on('activate', () => {

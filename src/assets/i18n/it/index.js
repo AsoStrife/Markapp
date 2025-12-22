@@ -85,6 +85,13 @@ export default {
         ,
         renderError: 'Errore nel rendering del markdown'
     },
+    dialog: {
+        unsavedChanges: 'Modifiche non salvate',
+        unsavedMessage: 'Ci sono modifiche non salvate. Vuoi salvare prima di chiudere?',
+        save: 'Salva',
+        dontSave: 'Non salvare',
+        cancel: 'Annulla'
+    },
     prompt: {
         enterUrl: 'Inserisci URL:',
         enterImageUrl: 'Inserisci URL immagine:'

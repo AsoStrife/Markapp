@@ -85,6 +85,13 @@ export default {
         ,
         renderError: 'Error rendering markdown'
     },
+    dialog: {
+        unsavedChanges: 'Unsaved Changes',
+        unsavedMessage: 'You have unsaved changes. Do you want to save before closing?',
+        save: 'Save',
+        dontSave: 'Don\'t Save',
+        cancel: 'Cancel'
+    },
     prompt: {
         enterUrl: 'Enter URL:',
         enterImageUrl: 'Enter image URL:'

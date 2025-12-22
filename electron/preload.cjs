@@ -41,5 +41,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Menu / locale control
     setAppLocale: (locale) => ipcRenderer.send('set-app-locale', locale),
-    getAppLocale: () => ipcRenderer.invoke('get-app-locale')
+    getAppLocale: () => ipcRenderer.invoke('get-app-locale'),
+
+    // Close window handling
+    setModifiedState: (isModified) => ipcRenderer.send('set-modified-state', isModified),
+    onBeforeClose: (callback) => {
+        ipcRenderer.on('before-close', callback)
+        return () => ipcRenderer.removeListener('before-close', callback)
+    },
+    confirmClose: (shouldSave) => ipcRenderer.send('confirm-close', shouldSave)
 })

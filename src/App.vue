@@ -33,6 +33,7 @@ import PreviewPane from './components/PreviewPane.vue'
 import WysiwygEditor from './components/WysiwygEditor.vue'
 import StatusBar from './components/StatusBar.vue'
 import OutlinePanel from './components/OutlinePanel.vue'
+import ConfirmCloseDialog from './components/ConfirmCloseDialog.vue'
 
 // Configurazione lowlight per syntax highlighting
 const lowlight = createLowlight(common)
@@ -107,6 +108,7 @@ const showOutline = ref(true)
 const restoreSessionEnabled = useLocalStorage('markapp.restoreSession', true)
 const sessionState = useLocalStorage('markapp.session', { filePath: null, cursor: 0 })
 const lastCursorIndex = ref(0)
+const showCloseDialog = ref(false)
 
 // UI texts
 const toolbarTitles = computed(() => ({
@@ -328,6 +330,13 @@ watch(viewMode, (newMode) => {
     }
 })
 
+// Watch per comunicare lo stato delle modifiche a Electron
+watch(isModified, (newValue) => {
+    if (window.electronAPI && window.electronAPI.setModifiedState) {
+        window.electronAPI.setModifiedState(newValue)
+    }
+})
+
 // Toolbar actions routing
 function handleToolbarAction(action) {
     if (activeEditor.value === 'tiptap' && tiptapEditor.value) {
@@ -397,7 +406,7 @@ function handleToolbarAction(action) {
 async function handleSave() {
     if (!window.electronAPI) {
         alert(t('alerts.noElectron'))
-        return
+        return false
     }
 
     const filePath = await window.electronAPI.getCurrentFilePath()
@@ -407,27 +416,32 @@ async function handleSave() {
         if (result.success) {
             isModified.value = false
             currentFilePath.value = result.filePath
+            return true
         } else {
             alert(t('alerts.saveError', { error: result.error }))
+            return false
         }
     } else {
-        handleSaveAs()
+        return await handleSaveAs()
     }
 }
 
 async function handleSaveAs() {
     if (!window.electronAPI) {
         alert(t('alerts.noElectron'))
-        return
+        return false
     }
 
     const result = await window.electronAPI.saveFileDialog(markdownContent.value)
     if (result.success) {
         isModified.value = false
         currentFilePath.value = result.filePath
+        return true
     } else if (result.error) {
         alert(t('alerts.saveError', { error: result.error }))
+        return false
     }
+    return false // User cancelled
 }
 
 async function handleOpen() {
@@ -478,6 +492,46 @@ function handleNew() {
         const html = marked(newContent)
         tiptapEditor.value.commands.setContent(html, false)
         isUpdatingFromMarkdown.value = false
+    }
+}
+
+async function handleBeforeClose() {
+    if (!isModified.value) {
+        // No unsaved changes, allow close
+        if (window.electronAPI && window.electronAPI.confirmClose) {
+            window.electronAPI.confirmClose('close')
+        }
+        return
+    }
+
+    // Show the confirmation dialog component
+    showCloseDialog.value = true
+}
+
+async function handleCloseDialogSave() {
+    showCloseDialog.value = false
+    // Save the file first
+    const saved = await handleSave()
+    // Only close if save was successful (not cancelled)
+    if (saved && window.electronAPI && window.electronAPI.confirmClose) {
+        window.electronAPI.confirmClose('close')
+    } else if (!saved && window.electronAPI && window.electronAPI.confirmClose) {
+        // Save was cancelled, treat as cancel
+        window.electronAPI.confirmClose('cancel')
+    }
+}
+
+function handleCloseDialogDontSave() {
+    showCloseDialog.value = false
+    if (window.electronAPI && window.electronAPI.confirmClose) {
+        window.electronAPI.confirmClose('close')
+    }
+}
+
+function handleCloseDialogCancel() {
+    showCloseDialog.value = false
+    if (window.electronAPI && window.electronAPI.confirmClose) {
+        window.electronAPI.confirmClose('cancel')
     }
 }
 
@@ -581,6 +635,11 @@ onMounted(() => {
                 }
             }
         })
+
+        // Handle before close event
+        window.electronAPI.onBeforeClose(() => {
+            handleBeforeClose()
+        })
     }
 })
 
@@ -659,6 +718,12 @@ onUnmounted(() => {
             :text="statusText" @update:viewMode="mode => viewMode = mode" @toggleLangMenu="showLangMenu = !showLangMenu"
             @selectLanguage="setLanguage" @toggleOutline="showOutline = !showOutline"
             @toggleRestoreSession="restoreSessionEnabled.value = !restoreSessionEnabled.value" />
+
+        <!-- Confirm Close Dialog -->
+        <ConfirmCloseDialog v-if="showCloseDialog" :title="t('dialog.unsavedChanges')"
+            :message="t('dialog.unsavedMessage')" :saveLabel="t('dialog.save')" :dontSaveLabel="t('dialog.dontSave')"
+            :cancelLabel="t('dialog.cancel')" @save="handleCloseDialogSave" @dontSave="handleCloseDialogDontSave"
+            @cancel="handleCloseDialogCancel" />
     </div>
 </template>
 
