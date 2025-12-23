@@ -140,7 +140,7 @@ const statusText = computed(() => ({
     viewRaw: t('toolbar.viewRaw'),
     viewSplit: t('toolbar.viewSplit'),
     viewPreview: t('toolbar.viewPreview'),
-    outline: 'Outline',
+    outline: t('outline.title'),
     settings: t('settings.menu'),
     restoreSession: t('settings.restoreSession'),
 }))
@@ -702,7 +702,7 @@ onUnmounted(() => {
         <TitleBar :currentFilePath="currentFilePath" :isModified="isModified" :untitledLabel="t('file.untitled')" />
         <Toolbar :titles="toolbarTitles" @action="handleToolbarAction" />
         <div class="flex-1 flex overflow-hidden">
-            <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('preview.title')"
+            <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('outline.title')"
                 @select="handleOutlineSelect" />
             <div class="flex-1 flex overflow-hidden">
                 <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"

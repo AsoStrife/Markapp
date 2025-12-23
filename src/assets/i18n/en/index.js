@@ -29,6 +29,9 @@ export default {
         title: 'Preview',
         readonly: 'Read only'
     },
+    outline: {
+        title: 'Table of contents'
+    },
     toolbar: {
         h1: 'Heading 1 (H1)',
         h2: 'Heading 2 (H2)',

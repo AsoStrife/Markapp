@@ -29,6 +29,9 @@ export default {
         title: 'Anteprima',
         readonly: 'Sola lettura'
     },
+    outline: {
+        title: 'Indice dei contenuti'
+    },
     toolbar: {
         h1: 'Titolo 1 (H1)',
         h2: 'Titolo 2 (H2)',
