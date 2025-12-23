@@ -115,7 +115,22 @@ function createWindow() {
                     { label: msgs.edit.copy, accelerator: 'CmdOrCtrl+C', role: 'copy' },
                     { label: msgs.edit.paste, accelerator: 'CmdOrCtrl+V', role: 'paste' },
                     { type: 'separator' },
-                    { label: msgs.edit.selectAll, accelerator: 'CmdOrCtrl+A', role: 'selectAll' }
+                    { label: msgs.edit.selectAll, accelerator: 'CmdOrCtrl+A', role: 'selectAll' },
+                    { type: 'separator' },
+                    {
+                        label: msgs.edit.find,
+                        accelerator: 'CmdOrCtrl+F',
+                        click: () => {
+                            mainWindow.webContents.send('show-search')
+                        }
+                    },
+                    {
+                        label: msgs.edit.replace,
+                        accelerator: 'CmdOrCtrl+H',
+                        click: () => {
+                            mainWindow.webContents.send('show-replace')
+                        }
+                    }
                 ]
             },
             {
@@ -333,7 +348,22 @@ app.whenReady().then(async () => {
                         { label: msgs.file.quit, accelerator: 'Alt+F4', click: () => { app.quit() } }
                     ]
                 },
-                { label: msgs.edit.menu, submenu: [{ label: msgs.edit.undo, accelerator: 'CmdOrCtrl+Z', role: 'undo' }, { label: msgs.edit.redo, accelerator: 'CmdOrCtrl+Y', role: 'redo' }, { type: 'separator' }, { label: msgs.edit.cut, accelerator: 'CmdOrCtrl+X', role: 'cut' }, { label: msgs.edit.copy, accelerator: 'CmdOrCtrl+C', role: 'copy' }, { label: msgs.edit.paste, accelerator: 'CmdOrCtrl+V', role: 'paste' }, { type: 'separator' }, { label: msgs.edit.selectAll, accelerator: 'CmdOrCtrl+A', role: 'selectAll' }] },
+                {
+                    label: msgs.edit.menu,
+                    submenu: [
+                        { label: msgs.edit.undo, accelerator: 'CmdOrCtrl+Z', role: 'undo' },
+                        { label: msgs.edit.redo, accelerator: 'CmdOrCtrl+Y', role: 'redo' },
+                        { type: 'separator' },
+                        { label: msgs.edit.cut, accelerator: 'CmdOrCtrl+X', role: 'cut' },
+                        { label: msgs.edit.copy, accelerator: 'CmdOrCtrl+C', role: 'copy' },
+                        { label: msgs.edit.paste, accelerator: 'CmdOrCtrl+V', role: 'paste' },
+                        { type: 'separator' },
+                        { label: msgs.edit.selectAll, accelerator: 'CmdOrCtrl+A', role: 'selectAll' },
+                        { type: 'separator' },
+                        { label: msgs.edit.find, accelerator: 'CmdOrCtrl+F', click: () => { mainWindow.webContents.send('show-search') } },
+                        { label: msgs.edit.replace, accelerator: 'CmdOrCtrl+H', click: () => { mainWindow.webContents.send('show-replace') } }
+                    ]
+                },
                 { label: msgs.view.menu, submenu: [{ label: msgs.view.reload, accelerator: 'CmdOrCtrl+R', click: () => { mainWindow.webContents.reload() } }, { label: msgs.view.devtools, accelerator: 'F12', click: () => { mainWindow.webContents.toggleDevTools() } }, { type: 'separator' }, { label: msgs.view.zoomIn, accelerator: 'CmdOrCtrl+Plus', role: 'zoomIn' }, { label: msgs.view.zoomOut, accelerator: 'CmdOrCtrl+-', role: 'zoomOut' }, { label: msgs.view.resetZoom, accelerator: 'CmdOrCtrl+0', role: 'resetZoom' }, { type: 'separator' }, { label: msgs.view.fullscreen, accelerator: 'F11', role: 'togglefullscreen' }] },
                 { label: msgs.info.menu, submenu: [{ label: msgs.info.about, click: () => { dialog.showMessageBox(mainWindow, { type: 'info', title: msgs.info.aboutTitle || msgs.info.about, message: msgs.app.title || 'Markapp', detail: msgs.info.aboutDetail || `Versione: 1.0.0\n\nUn editor Markdown moderno costruito con:\n• Vue 3\n• Electron\n• Tailwind CSS\n\n© 2025 Markapp`, buttons: [msgs.info.ok || 'OK'] }) } }] }
             ]

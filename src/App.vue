@@ -34,6 +34,7 @@ import WysiwygEditor from './components/WysiwygEditor.vue'
 import StatusBar from './components/StatusBar.vue'
 import OutlinePanel from './components/OutlinePanel.vue'
 import ConfirmCloseDialog from './components/ConfirmCloseDialog.vue'
+import SearchReplaceDialog from './components/SearchReplaceDialog.vue'
 
 // Configurazione lowlight per syntax highlighting
 const lowlight = createLowlight(common)
@@ -109,6 +110,8 @@ const restoreSessionEnabled = useLocalStorage('markapp.restoreSession', true)
 const sessionState = useLocalStorage('markapp.session', { filePath: null, cursor: 0 })
 const lastCursorIndex = ref(0)
 const showCloseDialog = ref(false)
+const showSearchDialog = ref(false)
+const searchDialogMode = ref('search') // 'search' or 'replace'
 
 // UI texts
 const toolbarTitles = computed(() => ({
@@ -535,6 +538,83 @@ function handleCloseDialogCancel() {
     }
 }
 
+// Search and replace functions
+function handleShowSearch() {
+    if (showSearchDialog.value && searchDialogMode.value === 'search') {
+        // Dialog already open in search mode, close it
+        showSearchDialog.value = false
+    } else {
+        // Open or switch to search mode
+        searchDialogMode.value = 'search'
+        showSearchDialog.value = true
+    }
+}
+
+function handleShowReplace() {
+    if (showSearchDialog.value && searchDialogMode.value === 'replace') {
+        // Dialog already open in replace mode, close it
+        showSearchDialog.value = false
+    } else {
+        // Open or switch to replace mode
+        searchDialogMode.value = 'replace'
+        showSearchDialog.value = true
+    }
+}
+
+function handleSearchFind(match) {
+    if (!markdownEditorRef.value) return
+    markdownEditorRef.value.selectRange(match.start, match.end)
+}
+
+function handleSearchReplace({ match, replaceText }) {
+    if (!markdownEditorRef.value) return
+    markdownEditorRef.value.replaceSelection(match.start, match.end, replaceText)
+}
+
+function handleSearchReplaceAll({ matches, replaceText, searchText, caseSensitive, useRegex, wholeWord }) {
+    if (!matches || matches.length === 0) return
+
+    let newContent = markdownContent.value
+
+    if (useRegex) {
+        // Use regex replace
+        try {
+            let pattern = searchText
+            const flags = caseSensitive ? 'g' : 'gi'
+            const regex = new RegExp(pattern, flags)
+            newContent = newContent.replace(regex, replaceText)
+        } catch (err) {
+            // Invalid regex, skip
+            return
+        }
+    } else if (wholeWord) {
+        // Word boundary replace
+        try {
+            const pattern = `\\b${searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`
+            const flags = caseSensitive ? 'g' : 'gi'
+            const regex = new RegExp(pattern, flags)
+            newContent = newContent.replace(regex, replaceText)
+        } catch (err) {
+            return
+        }
+    } else {
+        // Simple replace all
+        if (caseSensitive) {
+            newContent = newContent.split(searchText).join(replaceText)
+        } else {
+            // Case-insensitive replace
+            const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+            newContent = newContent.replace(regex, replaceText)
+        }
+    }
+
+    markdownContent.value = newContent
+}
+
+function handleSearchClose() {
+    showSearchDialog.value = false
+}
+
 // Gestione eventi da menu Electron
 onMounted(() => {
     if (window.electronAPI) {
@@ -640,6 +720,15 @@ onMounted(() => {
         window.electronAPI.onBeforeClose(() => {
             handleBeforeClose()
         })
+
+        // Handle search/replace from menu
+        window.electronAPI.onShowSearch(() => {
+            handleShowSearch()
+        })
+
+        window.electronAPI.onShowReplace(() => {
+            handleShowReplace()
+        })
     }
 })
 
@@ -673,6 +762,14 @@ function handleKeyDown(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
         e.preventDefault()
         handleToolbarAction('underline')
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault()
+        handleShowSearch()
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+        e.preventDefault()
+        handleShowReplace()
     }
 }
 
@@ -724,6 +821,11 @@ onUnmounted(() => {
             :message="t('dialog.unsavedMessage')" :saveLabel="t('dialog.save')" :dontSaveLabel="t('dialog.dontSave')"
             :cancelLabel="t('dialog.cancel')" @save="handleCloseDialogSave" @dontSave="handleCloseDialogDontSave"
             @cancel="handleCloseDialogCancel" />
+
+        <!-- Search/Replace Dialog -->
+        <SearchReplaceDialog :visible="showSearchDialog" :mode="searchDialogMode" :content="markdownContent"
+            :cursorPosition="markdownEditorRef?.getCursorPosition() || 0" @close="handleSearchClose"
+            @find="handleSearchFind" @replace="handleSearchReplace" @replaceAll="handleSearchReplaceAll" />
     </div>
 </template>
 

@@ -63,7 +63,27 @@ export default {
         cut: 'Cut',
         copy: 'Copy',
         paste: 'Paste',
-        selectAll: 'Select All'
+        selectAll: 'Select All',
+        find: 'Find...',
+        replace: 'Replace...'
+    },
+    search: {
+        title: 'Find',
+        replaceTitle: 'Find and Replace',
+        searchFor: 'Search for',
+        replaceWith: 'Replace with',
+        searchPlaceholder: 'Enter text to search...',
+        replacePlaceholder: 'Enter replacement text...',
+        caseSensitive: 'Case sensitive',
+        wholeWord: 'Match whole word',
+        useRegex: 'Use regular expression',
+        findNext: 'Find Next',
+        findPrevious: 'Find Previous',
+        replace: 'Replace',
+        replaceAll: 'Replace All',
+        of: 'of',
+        noMatches: 'No matches found',
+        close: 'Close'
     },
     view: {
         menu: 'View',

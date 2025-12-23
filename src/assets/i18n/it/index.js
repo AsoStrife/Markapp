@@ -63,7 +63,27 @@ export default {
         cut: 'Taglia',
         copy: 'Copia',
         paste: 'Incolla',
-        selectAll: 'Seleziona tutto'
+        selectAll: 'Seleziona tutto',
+        find: 'Trova...',
+        replace: 'Trova e sostituisci...'
+    },
+    search: {
+        title: 'Trova',
+        replaceTitle: 'Trova e sostituisci',
+        searchFor: 'Cerca',
+        replaceWith: 'Sostituisci con',
+        searchPlaceholder: 'Inserisci il testo da cercare...',
+        replacePlaceholder: 'Inserisci il testo sostitutivo...',
+        caseSensitive: 'Maiuscole/minuscole',
+        wholeWord: 'Parola intera',
+        useRegex: 'Usa espressione regolare',
+        findNext: 'Trova successivo',
+        findPrevious: 'Trova precedente',
+        replace: 'Sostituisci',
+        replaceAll: 'Sostituisci tutto',
+        of: 'di',
+        noMatches: 'Nessuna corrispondenza',
+        close: 'Chiudi'
     },
     view: {
         menu: 'Vista',

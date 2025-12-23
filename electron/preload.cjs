@@ -49,5 +49,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('before-close', callback)
         return () => ipcRenderer.removeListener('before-close', callback)
     },
-    confirmClose: (shouldSave) => ipcRenderer.send('confirm-close', shouldSave)
+    confirmClose: (shouldSave) => ipcRenderer.send('confirm-close', shouldSave),
+
+    // Search and replace
+    onShowSearch: (callback) => {
+        ipcRenderer.on('show-search', callback)
+        return () => ipcRenderer.removeListener('show-search', callback)
+    },
+    onShowReplace: (callback) => {
+        ipcRenderer.on('show-replace', callback)
+        return () => ipcRenderer.removeListener('show-replace', callback)
+    }
 })
