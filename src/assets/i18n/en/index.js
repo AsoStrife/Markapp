@@ -8,7 +8,9 @@ export default {
     },
     settings: {
         menu: 'Settings',
-        restoreSession: 'Restore last session'
+        restoreSession: 'Restore last session',
+        themeDark: 'Dark theme',
+        themeLight: 'Light theme'
     },
     file: {
         untitled: 'Untitled',

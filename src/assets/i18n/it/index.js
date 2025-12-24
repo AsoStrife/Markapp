@@ -8,7 +8,9 @@ export default {
     },
     settings: {
         menu: 'Impostazioni',
-        restoreSession: 'Ripristina ultima sessione'
+        restoreSession: 'Ripristina ultima sessione',
+        themeDark: 'Tema scuro',
+        themeLight: 'Tema chiaro'
     },
     file: {
         untitled: 'Senza titolo',

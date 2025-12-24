@@ -2,15 +2,20 @@
     <div v-if="visible" class="fixed top-4 right-4 z-50"
         :style="{ transform: `translate(${position.x}px, ${position.y}px)` }">
         <div ref="dialogRef"
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-96 border border-gray-300 dark:border-gray-600"
+            class="rounded-lg shadow-2xl w-96"
+            style="background-color: var(--dialog-bg); border: 1px solid var(--dialog-border);"
             @click.stop>
             <!-- Draggable header -->
-            <div class="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-t-lg cursor-move select-none"
+            <div class="flex items-center justify-between px-4 py-3 rounded-t-lg cursor-move select-none"
+                style="background-color: var(--dialog-header-bg);"
                 @mousedown="startDrag">
-                <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <h2 class="text-sm font-semibold" style="color: var(--dialog-text);">
                     {{ mode === 'search' ? t('search.title') : t('search.replaceTitle') }}
                 </h2>
-                <button @click="close" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                <button @click="close" class="transition-colors"
+                    style="color: var(--dialog-text-muted);"
+                    @mouseenter="$event.target.style.color = 'var(--dialog-text)'"
+                    @mouseleave="$event.target.style.color = 'var(--dialog-text-muted)'"
                     :title="t('search.close')">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -22,19 +27,20 @@
             <div class="p-4">
                 <!-- Search input -->
                 <div class="mb-3">
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-xs font-medium mb-1" style="color: var(--dialog-label);">
                         {{ t('search.searchFor') }}
                     </label>
-                    <input ref="searchInput" v-model="searchText" type="text" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded 
-                   bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    <input ref="searchInput" v-model="searchText" type="text" class="w-full px-2 py-1.5 text-sm rounded outline-none"
+                   style="border: 1px solid var(--dialog-input-border); background-color: var(--dialog-input-bg); color: var(--dialog-input-text);"
+                   @focus="$event.target.style.outline = '2px solid var(--dialog-input-focus)'"
+                   @blur="$event.target.style.outline = 'none'"
                         :placeholder="t('search.searchPlaceholder')" @keydown.enter="findNext" @keydown.esc="close" />
                     <!-- Find buttons directly under search field, aligned right -->
                     <div class="mt-2 flex justify-end gap-2">
-                        <button @click="findPrevious" :disabled="!searchText" class="btn-small secondary">
+                        <button @click="findPrevious" :disabled="!searchText" class="search-dialog-btn-small secondary">
                             {{ t('search.findPrevious') }}
                         </button>
-                        <button @click="findNext" :disabled="!searchText" class="btn-small primary">
+                        <button @click="findNext" :disabled="!searchText" class="search-dialog-btn-small primary">
                             {{ t('search.findNext') }}
                         </button>
                     </div>
@@ -42,21 +48,22 @@
 
                 <!-- Replace input (only in replace mode) -->
                 <div v-if="mode === 'replace'" class="mb-3">
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-xs font-medium mb-1" style="color: var(--dialog-label);">
                         {{ t('search.replaceWith') }}
                     </label>
-                    <input v-model="replaceText" type="text" class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded 
-                   bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        :placeholder="t('search.replacePlaceholder')" @keydown.enter="replace" @keydown.esc="close" />
+                    <input v-model="replaceText" type="text" class="w-full px-2 py-1.5 text-sm rounded outline-none"
+                   style="border: 1px solid var(--dialog-input-border); background-color: var(--dialog-input-bg); color: var(--dialog-input-text);"
+                   @focus="$event.target.style.outline = '2px solid var(--dialog-input-focus)'"
+                   @blur="$event.target.style.outline = 'none'"
+                   :placeholder="t('search.replacePlaceholder')" @keydown.enter="replace" @keydown.esc="close" />
 
                     <!-- Replace buttons directly under replace field, aligned right -->
                     <div class="mt-2 flex justify-end gap-2">
-                        <button @click="replace" :disabled="!searchText || totalMatches === 0" class="btn-small action">
+                        <button @click="replace" :disabled="!searchText || totalMatches === 0" class="search-dialog-btn-small action">
                             {{ t('search.replace') }}
                         </button>
                         <button @click="replaceAll" :disabled="!searchText || totalMatches === 0"
-                            class="btn-small action">
+                            class="search-dialog-btn-small action">
                             {{ t('search.replaceAll') }}
                         </button>
                     </div>
@@ -64,29 +71,26 @@
 
                 <!-- Options -->
                 <div class="mb-3 space-y-1">
-                    <label class="flex items-center text-xs text-gray-700 dark:text-gray-300 cursor-pointer">
-                        <input v-model="caseSensitive" type="checkbox" class="mr-2 rounded border-gray-300 dark:border-gray-600 
-                     text-blue-600 focus:ring-blue-500" />
+                    <label class="flex items-center text-xs cursor-pointer" style="color: var(--dialog-label);">
+                        <input v-model="caseSensitive" type="checkbox" class="mr-2 rounded" />
                         {{ t('search.caseSensitive') }}
                     </label>
-                    <label class="flex items-center text-xs text-gray-700 dark:text-gray-300 cursor-pointer">
-                        <input v-model="wholeWord" type="checkbox" class="mr-2 rounded border-gray-300 dark:border-gray-600 
-                     text-blue-600 focus:ring-blue-500" />
+                    <label class="flex items-center text-xs cursor-pointer" style="color: var(--dialog-label);">
+                        <input v-model="wholeWord" type="checkbox" class="mr-2 rounded" />
                         {{ t('search.wholeWord') }}
                     </label>
-                    <label class="flex items-center text-xs text-gray-700 dark:text-gray-300 cursor-pointer">
-                        <input v-model="useRegex" type="checkbox" class="mr-2 rounded border-gray-300 dark:border-gray-600 
-                     text-blue-600 focus:ring-blue-500" />
+                    <label class="flex items-center text-xs cursor-pointer" style="color: var(--dialog-label);">
+                        <input v-model="useRegex" type="checkbox" class="mr-2 rounded" />
                         {{ t('search.useRegex') }}
                     </label>
                 </div>
 
                 <!-- Match counter -->
-                <div v-if="searchText && totalMatches > 0" class="mb-3 text-xs text-gray-600 dark:text-gray-400">
+                <div v-if="searchText && totalMatches > 0" class="mb-3 text-xs" style="color: var(--dialog-text-muted);">
                     {{ currentMatchIndex + 1 }} {{ t('search.of') }} {{ totalMatches }}
                 </div>
 
-                <div v-if="searchText && totalMatches === 0" class="mb-3 text-xs text-red-600 dark:text-red-400">
+                <div v-if="searchText && totalMatches === 0" class="mb-3 text-xs" style="color: #ef4444;">
                     {{ t('search.noMatches') }}
                 </div>
 
@@ -299,66 +303,3 @@ function replaceAll() {
     }, 50)
 }
 </script>
-
-<style scoped>
-/* Subtle outline-style buttons for non-modal search dialog */
-.btn-small {
-    min-width: 64px;
-    padding: 6px 12px;
-    font-size: 0.8125rem;
-    /* 13px */
-    border-radius: 8px;
-    border: 2px solid transparent;
-    background: transparent;
-    cursor: pointer;
-    transition: background-color .12s ease, transform .06s ease, border-color .12s ease, color .12s ease;
-}
-
-.btn-small:active {
-    transform: translateY(1px);
-}
-
-/* Primary: subtle outline blue */
-.btn-small.primary {
-    color: #2563eb;
-    /* blue-600 */
-    background: transparent;
-    border-color: rgba(37, 99, 235, 0.28);
-}
-
-.btn-small.primary:hover {
-    background: rgba(37, 99, 235, 0.06);
-}
-
-/* Secondary: muted neutral */
-.btn-small.secondary {
-    color: #6b7280;
-    /* gray-500 */
-    background: transparent;
-    border-color: rgba(107, 114, 128, 0.12);
-}
-
-.btn-small.secondary:hover {
-    background: rgba(107, 114, 128, 0.04);
-}
-
-/* Action (replace): subtle green outline */
-.btn-small.action {
-    color: #059669;
-    /* green-600 */
-    background: transparent;
-    border-color: rgba(5, 150, 105, 0.22);
-}
-
-.btn-small.action:hover {
-    background: rgba(5, 150, 105, 0.06);
-}
-
-.btn-small[disabled] {
-    color: #9ca3af;
-    border-color: rgba(156, 163, 175, 0.06);
-    background: transparent;
-    cursor: not-allowed;
-    opacity: 0.8;
-}
-</style>

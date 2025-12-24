@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain, dialog, nativeTheme } from 'electron'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -379,6 +379,22 @@ app.whenReady().then(async () => {
     // Track modified state from renderer
     ipcMain.on('set-modified-state', (event, modified) => {
         isModified = modified
+    })
+
+    // Handle theme change from renderer
+    ipcMain.on('set-app-theme', (event, theme) => {
+        if (theme === 'light') {
+            nativeTheme.themeSource = 'light'
+        } else if (theme === 'dark') {
+            nativeTheme.themeSource = 'dark'
+        } else {
+            nativeTheme.themeSource = 'system'
+        }
+    })
+
+    // Provide current theme to renderer
+    ipcMain.handle('get-app-theme', () => {
+        return nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
     })
 
     // Handle close confirmation from renderer

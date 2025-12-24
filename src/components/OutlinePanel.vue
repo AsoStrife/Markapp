@@ -43,8 +43,8 @@ const visibleItems = computed(() => {
 </script>
 
 <template>
-    <div class="w-64 bg-gray-850 border-r border-gray-700 h-full flex flex-col">
-        <div class="px-3 py-2 bg-gray-800 border-b border-gray-700 text-sm font-semibold text-gray-200">
+    <div class="w-64 h-full flex flex-col" style="background-color: var(--outline-bg); border-right: 1px solid var(--outline-header-border);">
+        <div class="px-3 py-2 text-sm font-semibold" style="background-color: var(--outline-header-bg); border-bottom: 1px solid var(--outline-header-border); color: var(--outline-header-text);">
             {{ props.title }}
         </div>
         <div class="flex-1 overflow-auto py-2">
@@ -52,7 +52,10 @@ const visibleItems = computed(() => {
                 <li v-for="({ it, pos }, i) in visibleItems" :key="it.index">
                     <div class="flex items-center">
                         <button v-if="hasChildrenAt(pos)"
-                            class="mx-1 w-5 h-5 flex items-center justify-center text-gray-300 hover:text-white"
+                            class="mx-1 w-5 h-5 flex items-center justify-center"
+                            style="color: var(--outline-icon-text);"
+                            @mouseenter="$event.target.style.color = 'var(--outline-icon-hover)'"
+                            @mouseleave="$event.target.style.color = 'var(--outline-icon-text)'"
                             @click.stop="toggleCollapse(it.index)" :title="collapsed[it.index] ? 'Expand' : 'Collapse'">
                             <svg class="w-4 h-4 transition-transform"
                                 :style="{ transform: collapsed[it.index] ? 'rotate(0deg)' : 'rotate(90deg)' }"
@@ -62,10 +65,13 @@ const visibleItems = computed(() => {
                             </svg>
                         </button>
                         <button
-                            class="flex-1 text-left px-3 py-1.5 hover:bg-gray-700 rounded transition-colors text-gray-200"
-                            :style="{ paddingLeft: `${(it.level - 1) * 12 + 12}px` }" @click="selectItem(it.index)"
+                            class="flex-1 text-left px-3 py-1.5 rounded transition-colors"
+                            :style="{ paddingLeft: `${(it.level - 1) * 12 + 12}px`, color: 'var(--outline-item-text)' }"
+                            @mouseenter="$event.target.style.backgroundColor = 'var(--outline-item-hover)'"
+                            @mouseleave="$event.target.style.backgroundColor = 'transparent'"
+                            @click="selectItem(it.index)"
                             :title="it.title">
-                            <span class="text-xs text-gray-400">H{{ it.level }}</span>
+                            <span class="text-xs" style="color: var(--outline-item-label);">H{{ it.level }}</span>
                             <span class="ml-2 truncate">{{ it.title }}</span>
                         </button>
                     </div>
@@ -74,9 +80,3 @@ const visibleItems = computed(() => {
         </div>
     </div>
 </template>
-
-<style scoped>
-.bg-gray-850 {
-    background-color: #1f2837;
-}
-</style>

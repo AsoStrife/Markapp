@@ -144,38 +144,14 @@ defineExpose({
 </script>
 
 <template>
-    <div class="flex flex-col border-r border-gray-700 transition-all duration-300">
-        <div class="px-4 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
-            <span class="text-sm font-medium text-gray-300">Editor Markdown</span>
-            <span class="text-xs text-gray-500">{{ content.length }} caratteri</span>
+    <div class="flex flex-col transition-all duration-300" style="border-right: 1px solid var(--editor-header-border);">
+        <div class="px-4 py-2 flex items-center justify-between" style="background-color: var(--editor-header-bg); border-bottom: 1px solid var(--editor-header-border);">
+            <span class="text-sm font-medium" style="color: var(--editor-header-text);">Editor Markdown</span>
+            <span class="text-xs" style="color: var(--editor-header-label);">{{ content.length }} caratteri</span>
         </div>
         <textarea ref="textareaRef" :value="content" @input="update($event.target.value)" @click="emitCursor"
             @mouseup="emitCursor" @keyup="emitCursor"
-            class="flex-1 w-full p-4 bg-gray-900 text-gray-100 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+            class="markdown-editor-textarea"
             :placeholder="props.placeholder" spellcheck="false"></textarea>
     </div>
 </template>
-
-<style scoped>
-textarea {
-    tab-size: 2;
-    line-height: 1.6;
-}
-
-textarea::-webkit-scrollbar {
-    width: 10px;
-}
-
-textarea::-webkit-scrollbar-track {
-    background: #1f2937;
-}
-
-textarea::-webkit-scrollbar-thumb {
-    background: #4b5563;
-    border-radius: 5px;
-}
-
-textarea::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
-}
-</style>

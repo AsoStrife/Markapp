@@ -43,6 +43,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setAppLocale: (locale) => ipcRenderer.send('set-app-locale', locale),
     getAppLocale: () => ipcRenderer.invoke('get-app-locale'),
 
+    // Theme control
+    setAppTheme: (theme) => ipcRenderer.send('set-app-theme', theme),
+    getAppTheme: () => ipcRenderer.invoke('get-app-theme'),
+
     // Close window handling
     setModifiedState: (isModified) => ipcRenderer.send('set-modified-state', isModified),
     onBeforeClose: (callback) => {

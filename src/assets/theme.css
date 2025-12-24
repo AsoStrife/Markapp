@@ -1,0 +1,475 @@
+/* ============================================
+   MARKAPP - THEME STYLES (DARK & LIGHT)
+   Stili centralizzati per tutti i componenti
+   ============================================ */
+
+/* CSS Variables per i temi */
+:root {
+  /* Dark Theme (default) */
+  --app-bg: #111827;
+  --app-text: #f9fafb;
+  
+  /* TitleBar & Headers */
+  --titlebar-bg: #1f2937;
+  --titlebar-border: #374151;
+  --titlebar-text: #9ca3af;
+  --titlebar-text-primary: #60a5fa;
+  --titlebar-modified: #fbbf24;
+  
+  /* Toolbar */
+  --toolbar-bg: #1f2937;
+  --toolbar-border: #374151;
+  --toolbar-border-divider: #4b5563;
+  --toolbar-btn-bg: #374151;
+  --toolbar-btn-hover: #4b5563;
+  --toolbar-btn-active: #2563eb;
+  --toolbar-btn-border: #4b5563;
+  --toolbar-btn-border-hover: #6b7280;
+  --toolbar-text: #e5e7eb;
+  --toolbar-text-hover: #ffffff;
+  
+  /* Editor */
+  --editor-bg: #0f172a;
+  --editor-header-bg: #1f2937;
+  --editor-header-border: #374151;
+  --editor-header-text: #d1d5db;
+  --editor-header-label: #9ca3af;
+  --editor-text: #f3f4f6;
+  --editor-placeholder: #6b7280;
+  --editor-focus-ring: #2563eb;
+  --editor-scrollbar-track: #1f2937;
+  --editor-scrollbar-thumb: #4b5563;
+  --editor-scrollbar-thumb-hover: #6b7280;
+  
+  /* Preview */
+  --preview-bg: #ffffff;
+  --preview-header-bg: #1f2937;
+  --preview-header-border: #374151;
+  --preview-header-text: #d1d5db;
+  --preview-header-label: #9ca3af;
+  --preview-text: #1f2937;
+  --preview-highlight: rgba(250, 204, 21, 0.35);
+  --preview-highlight-border: rgba(250, 204, 21, 0.9);
+  
+  /* StatusBar */
+  --statusbar-bg: #1f2937;
+  --statusbar-border: #374151;
+  --statusbar-text: #9ca3af;
+  --statusbar-text-active: #60a5fa;
+  --statusbar-btn-hover: #374151;
+  
+  /* Outline Panel */
+  --outline-bg: #1a2332;
+  --outline-header-bg: #1f2937;
+  --outline-header-border: #374151;
+  --outline-header-text: #e5e7eb;
+  --outline-item-text: #e5e7eb;
+  --outline-item-label: #9ca3af;
+  --outline-item-hover: #374151;
+  --outline-icon-text: #d1d5db;
+  --outline-icon-hover: #ffffff;
+  
+  /* Search/Replace Dialog */
+  --dialog-bg: #1f2937;
+  --dialog-header-bg: #374151;
+  --dialog-border: #4b5563;
+  --dialog-text: #f3f4f6;
+  --dialog-text-muted: #9ca3af;
+  --dialog-label: #d1d5db;
+  --dialog-input-bg: #374151;
+  --dialog-input-border: #4b5563;
+  --dialog-input-text: #f3f4f6;
+  --dialog-input-focus: #2563eb;
+  --dialog-btn-primary: #2563eb;
+  --dialog-btn-primary-border: rgba(37, 99, 235, 0.28);
+  --dialog-btn-primary-hover: rgba(37, 99, 235, 0.06);
+  --dialog-btn-secondary: #6b7280;
+  --dialog-btn-secondary-border: rgba(107, 114, 128, 0.12);
+  --dialog-btn-secondary-hover: rgba(107, 114, 128, 0.04);
+  --dialog-btn-action: #059669;
+  --dialog-btn-action-border: rgba(5, 150, 105, 0.22);
+  --dialog-btn-action-hover: rgba(5, 150, 105, 0.06);
+  --dialog-btn-disabled: #9ca3af;
+  --dialog-btn-disabled-border: rgba(156, 163, 175, 0.06);
+  
+  /* Confirm Dialog */
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-bg: #1f2937;
+  --modal-border: #374151;
+  --modal-text: #f3f4f6;
+  --modal-text-muted: #d1d5db;
+  --modal-btn-danger: #ef4444;
+  --modal-btn-danger-hover: rgba(239, 68, 68, 0.08);
+  --modal-btn-primary: #2563eb;
+  --modal-btn-primary-hover: #1e4fd1;
+  --modal-btn-cancel: #9ca3af;
+  --modal-btn-cancel-border: rgba(156, 163, 175, 0.08);
+  --modal-btn-cancel-hover: rgba(156, 163, 175, 0.04);
+  
+  /* WYSIWYG Editor */
+  --wysiwyg-bg: #ffffff;
+  --wysiwyg-header-bg: #1f2937;
+  --wysiwyg-header-border: #374151;
+  --wysiwyg-header-text: #d1d5db;
+  --wysiwyg-header-label: #10b981;
+  --wysiwyg-scrollbar-track: #f1f5f9;
+  --wysiwyg-scrollbar-thumb: #cbd5e1;
+  --wysiwyg-scrollbar-thumb-hover: #94a3b8;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --app-bg: #f9fafb;
+  --app-text: #111827;
+  
+  /* TitleBar & Headers */
+  --titlebar-bg: #ffffff;
+  --titlebar-border: #e5e7eb;
+  --titlebar-text: #6b7280;
+  --titlebar-text-primary: #2563eb;
+  --titlebar-modified: #f59e0b;
+  
+  /* Toolbar */
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #e5e7eb;
+  --toolbar-border-divider: #d1d5db;
+  --toolbar-btn-bg: #f3f4f6;
+  --toolbar-btn-hover: #e5e7eb;
+  --toolbar-btn-active: #2563eb;
+  --toolbar-btn-border: #d1d5db;
+  --toolbar-btn-border-hover: #9ca3af;
+  --toolbar-text: #374151;
+  --toolbar-text-hover: #111827;
+  
+  /* Editor */
+  --editor-bg: #ffffff;
+  --editor-header-bg: #f9fafb;
+  --editor-header-border: #e5e7eb;
+  --editor-header-text: #374151;
+  --editor-header-label: #6b7280;
+  --editor-text: #111827;
+  --editor-placeholder: #9ca3af;
+  --editor-focus-ring: #2563eb;
+  --editor-scrollbar-track: #f9fafb;
+  --editor-scrollbar-thumb: #d1d5db;
+  --editor-scrollbar-thumb-hover: #9ca3af;
+  
+  /* Preview */
+  --preview-bg: #ffffff;
+  --preview-header-bg: #f9fafb;
+  --preview-header-border: #e5e7eb;
+  --preview-header-text: #374151;
+  --preview-header-label: #6b7280;
+  --preview-text: #1f2937;
+  --preview-highlight: rgba(251, 191, 36, 0.25);
+  --preview-highlight-border: rgba(251, 191, 36, 0.8);
+  
+  /* StatusBar */
+  --statusbar-bg: #f9fafb;
+  --statusbar-border: #e5e7eb;
+  --statusbar-text: #6b7280;
+  --statusbar-text-active: #2563eb;
+  --statusbar-btn-hover: #e5e7eb;
+  
+  /* Outline Panel */
+  --outline-bg: #f9fafb;
+  --outline-header-bg: #ffffff;
+  --outline-header-border: #e5e7eb;
+  --outline-header-text: #111827;
+  --outline-item-text: #374151;
+  --outline-item-label: #6b7280;
+  --outline-item-hover: #e5e7eb;
+  --outline-icon-text: #6b7280;
+  --outline-icon-hover: #111827;
+  
+  /* Search/Replace Dialog */
+  --dialog-bg: #ffffff;
+  --dialog-header-bg: #f3f4f6;
+  --dialog-border: #d1d5db;
+  --dialog-text: #111827;
+  --dialog-text-muted: #6b7280;
+  --dialog-label: #374151;
+  --dialog-input-bg: #ffffff;
+  --dialog-input-border: #d1d5db;
+  --dialog-input-text: #111827;
+  --dialog-input-focus: #2563eb;
+  --dialog-btn-primary: #2563eb;
+  --dialog-btn-primary-border: rgba(37, 99, 235, 0.28);
+  --dialog-btn-primary-hover: rgba(37, 99, 235, 0.10);
+  --dialog-btn-secondary: #6b7280;
+  --dialog-btn-secondary-border: rgba(107, 114, 128, 0.20);
+  --dialog-btn-secondary-hover: rgba(107, 114, 128, 0.08);
+  --dialog-btn-action: #059669;
+  --dialog-btn-action-border: rgba(5, 150, 105, 0.30);
+  --dialog-btn-action-hover: rgba(5, 150, 105, 0.10);
+  --dialog-btn-disabled: #9ca3af;
+  --dialog-btn-disabled-border: rgba(156, 163, 175, 0.15);
+  
+  /* Confirm Dialog */
+  --modal-overlay: rgba(0, 0, 0, 0.4);
+  --modal-bg: #ffffff;
+  --modal-border: #e5e7eb;
+  --modal-text: #111827;
+  --modal-text-muted: #374151;
+  --modal-btn-danger: #ef4444;
+  --modal-btn-danger-hover: rgba(239, 68, 68, 0.12);
+  --modal-btn-primary: #2563eb;
+  --modal-btn-primary-hover: #1d4ed8;
+  --modal-btn-cancel: #6b7280;
+  --modal-btn-cancel-border: rgba(107, 114, 128, 0.15);
+  --modal-btn-cancel-hover: rgba(107, 114, 128, 0.08);
+  
+  /* WYSIWYG Editor */
+  --wysiwyg-bg: #ffffff;
+  --wysiwyg-header-bg: #f9fafb;
+  --wysiwyg-header-border: #e5e7eb;
+  --wysiwyg-header-text: #374151;
+  --wysiwyg-header-label: #059669;
+  --wysiwyg-scrollbar-track: #f9fafb;
+  --wysiwyg-scrollbar-thumb: #d1d5db;
+  --wysiwyg-scrollbar-thumb-hover: #9ca3af;
+}
+
+/* ===========================================
+   TOOLBAR COMPONENT STYLES
+   =========================================== */
+.toolbar-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: var(--toolbar-btn-bg);
+  color: var(--toolbar-text);
+  border: 1px solid var(--toolbar-btn-border);
+  border-radius: 0.375rem;
+  min-width: 36px;
+  text-align: center;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.toolbar-btn:hover {
+  background-color: var(--toolbar-btn-hover);
+  color: var(--toolbar-text-hover);
+  border-color: var(--toolbar-btn-border-hover);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-btn:active {
+  background-color: var(--toolbar-btn-active);
+  transform: scale(0.95);
+}
+
+.toolbar-btn-icon {
+  padding: 0.5rem;
+  background-color: var(--toolbar-btn-bg);
+  color: var(--toolbar-text);
+  border: 1px solid var(--toolbar-btn-border);
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.toolbar-btn-icon:hover {
+  background-color: var(--toolbar-btn-hover);
+  color: var(--toolbar-text-hover);
+  border-color: var(--toolbar-btn-border-hover);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-btn-icon:active {
+  background-color: var(--toolbar-btn-active);
+  transform: scale(0.95);
+}
+
+/* ===========================================
+   MARKDOWN EDITOR STYLES
+   =========================================== */
+.markdown-editor-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--editor-bg);
+  color: var(--editor-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  resize: none;
+  border: none;
+  outline: none;
+  tab-size: 2;
+  line-height: 1.6;
+}
+
+.markdown-editor-textarea:focus {
+  outline: 2px solid var(--editor-focus-ring);
+  outline-offset: -2px;
+}
+
+.markdown-editor-textarea::placeholder {
+  color: var(--editor-placeholder);
+}
+
+.markdown-editor-textarea::-webkit-scrollbar {
+  width: 10px;
+}
+
+.markdown-editor-textarea::-webkit-scrollbar-track {
+  background: var(--editor-scrollbar-track);
+}
+
+.markdown-editor-textarea::-webkit-scrollbar-thumb {
+  background: var(--editor-scrollbar-thumb);
+  border-radius: 5px;
+}
+
+.markdown-editor-textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--editor-scrollbar-thumb-hover);
+}
+
+/* ===========================================
+   PREVIEW PANE STYLES
+   =========================================== */
+.preview-highlight {
+  background: var(--preview-highlight);
+  outline: 2px solid var(--preview-highlight-border);
+  border-radius: 6px;
+  transition: background 0.3s ease, outline-color 0.3s ease;
+}
+
+/* ===========================================
+   OUTLINE PANEL STYLES
+   =========================================== */
+.outline-panel-bg {
+  background-color: var(--outline-bg);
+}
+
+/* ===========================================
+   SEARCH/REPLACE DIALOG STYLES
+   =========================================== */
+.search-dialog-btn-small {
+  min-width: 64px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.12s ease, transform 0.06s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.search-dialog-btn-small:active {
+  transform: translateY(1px);
+}
+
+.search-dialog-btn-small.primary {
+  color: var(--dialog-btn-primary);
+  background: transparent;
+  border-color: var(--dialog-btn-primary-border);
+}
+
+.search-dialog-btn-small.primary:hover {
+  background: var(--dialog-btn-primary-hover);
+}
+
+.search-dialog-btn-small.secondary {
+  color: var(--dialog-btn-secondary);
+  background: transparent;
+  border-color: var(--dialog-btn-secondary-border);
+}
+
+.search-dialog-btn-small.secondary:hover {
+  background: var(--dialog-btn-secondary-hover);
+}
+
+.search-dialog-btn-small.action {
+  color: var(--dialog-btn-action);
+  background: transparent;
+  border-color: var(--dialog-btn-action-border);
+}
+
+.search-dialog-btn-small.action:hover {
+  background: var(--dialog-btn-action-hover);
+}
+
+.search-dialog-btn-small[disabled] {
+  color: var(--dialog-btn-disabled);
+  border-color: var(--dialog-btn-disabled-border);
+  background: transparent;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* ===========================================
+   CONFIRM DIALOG STYLES
+   =========================================== */
+.confirm-dialog-btn-foot {
+  min-width: 76px;
+  padding: 6px 10px;
+  font-size: 0.8125rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.12s ease, transform 0.06s ease, border-color 0.12s ease;
+}
+
+.confirm-dialog-btn-foot:active {
+  transform: scale(0.985);
+}
+
+.confirm-dialog-btn-foot.left {
+  color: var(--modal-btn-danger);
+}
+
+.confirm-dialog-btn-foot.left:hover {
+  background: var(--modal-btn-danger-hover);
+}
+
+.confirm-dialog-btn-foot.right {
+  color: white;
+  background: var(--modal-btn-primary);
+  border-color: rgba(37, 99, 235, 0.15);
+}
+
+.confirm-dialog-btn-foot.right:hover {
+  background: var(--modal-btn-primary-hover);
+}
+
+.confirm-dialog-btn-foot-cancel {
+  padding: 5px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--modal-btn-cancel);
+  border: 1px solid var(--modal-btn-cancel-border);
+  cursor: pointer;
+}
+
+.confirm-dialog-btn-foot-cancel:hover {
+  background: var(--modal-btn-cancel-hover);
+}
+
+/* ===========================================
+   WYSIWYG EDITOR STYLES
+   =========================================== */
+.tiptap-wrapper {
+  cursor: text;
+}
+
+.tiptap-wrapper::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tiptap-wrapper::-webkit-scrollbar-track {
+  background: var(--wysiwyg-scrollbar-track);
+}
+
+.tiptap-wrapper::-webkit-scrollbar-thumb {
+  background: var(--wysiwyg-scrollbar-thumb);
+  border-radius: 5px;
+}
+
+.tiptap-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--wysiwyg-scrollbar-thumb-hover);
+}
