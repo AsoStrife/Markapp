@@ -4,6 +4,7 @@ import { reactive, computed } from 'vue'
 const props = defineProps({
     items: { type: Array, default: () => [] }, // [{ title, level, index }]
     title: { type: String, default: 'Outline' },
+    width: { type: Number, default: 256 }, // Larghezza dinamica in pixel
 })
 const emit = defineEmits(['select'])
 
@@ -43,13 +44,13 @@ const visibleItems = computed(() => {
 </script>
 
 <template>
-    <div class="w-64 h-full flex flex-col" style="background-color: var(--outline-bg); border-right: 1px solid var(--outline-header-border);">
+    <div class="h-full flex flex-col" :style="{ width: `${props.width}px`, backgroundColor: 'var(--outline-bg)', borderRight: '1px solid var(--outline-header-border)' }">
         <div class="px-3 py-2 text-sm font-semibold" style="background-color: var(--outline-header-bg); border-bottom: 1px solid var(--outline-header-border); color: var(--outline-header-text);">
             {{ props.title }}
         </div>
         <div class="flex-1 overflow-auto py-2">
             <ul class="space-y-0.5">
-                <li v-for="({ it, pos }, i) in visibleItems" :key="it.index">
+                <li v-for="({ it, pos }) in visibleItems" :key="it.index">
                     <div class="flex items-center">
                         <button v-if="hasChildrenAt(pos)"
                             class="mx-1 w-5 h-5 flex items-center justify-center"

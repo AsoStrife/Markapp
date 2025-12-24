@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocalStorage } from '@vueuse/core'
 import { useTheme } from './composables/useTheme'
+import { useResizable } from './composables/useResizable'
 // Import welcome markdown (Italian)
 import welcomeIt from './assets/defaults/md/it.md?raw'
 import welcomeEn from './assets/defaults/md/en.md?raw'
@@ -36,6 +37,7 @@ import StatusBar from './components/StatusBar.vue'
 import OutlinePanel from './components/OutlinePanel.vue'
 import ConfirmCloseDialog from './components/ConfirmCloseDialog.vue'
 import SearchReplaceDialog from './components/SearchReplaceDialog.vue'
+import ResizeHandle from './components/ResizeHandle.vue'
 
 // Configurazione lowlight per syntax highlighting
 const lowlight = createLowlight(common)
@@ -116,6 +118,21 @@ const lastCursorIndex = ref(0)
 const showCloseDialog = ref(false)
 const showSearchDialog = ref(false)
 const searchDialogMode = ref('search') // 'search' or 'replace'
+
+// Resizable columns
+// Outline panel con larghezza fissa tra 150-600px
+const { width: outlineWidth, startResize: startOutlineResize } = useResizable('markapp.outlineWidth', 256, 150, () => 600)
+
+// Editor in split view: calcola il max width dinamicamente per evitare spazio vuoto
+// Il max width è lo spazio disponibile meno lo spazio minimo per il preview (300px)
+const getEditorMaxWidth = () => {
+    if (typeof window === 'undefined') return 2000
+    const availableSpace = window.innerWidth - (showOutline.value ? outlineWidth.value : 0) - 4 // -4 per i resize handles
+    return Math.max(300, availableSpace - 300) // Lascia almeno 300px per il preview
+}
+
+const defaultEditorWidth = typeof window !== 'undefined' ? Math.floor((window.innerWidth - 256) / 2) : 600
+const { width: editorWidth, startResize: startEditorResize } = useResizable('markapp.editorWidth', defaultEditorWidth, 300, getEditorMaxWidth)
 
 // UI texts
 const toolbarTitles = computed(() => ({
@@ -807,14 +824,28 @@ onUnmounted(() => {
         <TitleBar :currentFilePath="currentFilePath" :isModified="isModified" :untitledLabel="t('file.untitled')" />
         <Toolbar :titles="toolbarTitles" @action="handleToolbarAction" />
         <div class="flex-1 flex overflow-hidden">
+            <!-- Outline Panel -->
             <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('outline.title')"
-                @select="handleOutlineSelect" />
+                :width="outlineWidth" @select="handleOutlineSelect" />
+            
+            <!-- Resize Handle per Outline -->
+            <ResizeHandle v-show="showOutline" @mousedown="startOutlineResize" />
+            
             <div class="flex-1 flex overflow-hidden">
+                <!-- Markdown Editor -->
                 <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"
-                    :class="viewMode === 'split' ? 'w-1/2' : 'w-full'" ref="markdownEditorRef" v-model="markdownContent"
+                    :width="viewMode === 'split' ? editorWidth : null"
+                    ref="markdownEditorRef" v-model="markdownContent"
                     :placeholder="t('editor.placeholder')" @cursor="handleCursor" />
+                
+                <!-- Resize Handle tra Editor e Preview -->
+                <ResizeHandle v-show="viewMode === 'split'" @mousedown="startEditorResize" />
+                
+                <!-- Preview Pane -->
                 <PreviewPane ref="previewPaneRef" v-show="viewMode === 'split'" :html="renderedMarkdown"
                     :title="t('preview.title')" :readonlyLabel="t('preview.readonly')" />
+                
+                <!-- WYSIWYG Editor -->
                 <WysiwygEditor v-show="viewMode === 'preview'" :editor="tiptapEditor" />
             </div>
         </div>

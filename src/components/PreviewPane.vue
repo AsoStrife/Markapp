@@ -58,7 +58,7 @@ defineExpose({ highlightByIndex })
 </script>
 
 <template>
-    <div class="w-1/2 flex flex-col transition-all duration-300">
+    <div class="flex-1 flex flex-col">
         <div class="px-4 py-2 flex items-center justify-between"
             style="background-color: var(--preview-header-bg); border-bottom: 1px solid var(--preview-header-border);">
             <span class="text-sm font-medium" style="color: var(--preview-header-text);">{{ props.title }}</span>

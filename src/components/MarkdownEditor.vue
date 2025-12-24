@@ -4,6 +4,7 @@ import { ref, watch } from 'vue'
 const props = defineProps({
     modelValue: { type: String, required: true },
     placeholder: { type: String, default: '' },
+    width: { type: Number, default: null }, // Larghezza dinamica in pixel (null = usa flex)
 })
 
 const emit = defineEmits(['update:modelValue', 'cursor'])
@@ -144,7 +145,7 @@ defineExpose({
 </script>
 
 <template>
-    <div class="flex flex-col transition-all duration-300" style="border-right: 1px solid var(--editor-header-border);">
+    <div class="flex-col" :class="props.width ? 'flex' : 'flex flex-1'" :style="{ width: props.width ? `${props.width}px` : undefined, flexShrink: props.width ? 0 : undefined, borderRight: props.width ? '1px solid var(--editor-header-border)' : 'none' }">
         <div class="px-4 py-2 flex items-center justify-between" style="background-color: var(--editor-header-bg); border-bottom: 1px solid var(--editor-header-border);">
             <span class="text-sm font-medium" style="color: var(--editor-header-text);">Editor Markdown</span>
             <span class="text-xs" style="color: var(--editor-header-label);">{{ content.length }} caratteri</span>
