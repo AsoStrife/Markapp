@@ -311,10 +311,10 @@ app.whenReady().then(async () => {
     // Check if a .md file was passed as argument (double-click or context menu)
     pendingFileToOpen = getFilePathFromArgs()
 
-    // Carica i file di traduzione delle UI da build (Vite) o dalla sorgente usando import dinamico ESM
+    // Carica i file di traduzione delle UI da electron/i18n usando import dinamico ESM
     try {
-        const itPath = path.join(__dirname, '../src/assets/i18n/it/index.js')
-        const enPath = path.join(__dirname, '../src/assets/i18n/en/index.js')
+        const itPath = path.join(__dirname, 'i18n/it/index.js')
+        const enPath = path.join(__dirname, 'i18n/en/index.js')
         if (fs.existsSync(itPath)) {
             const mod = await import(pathToFileURL(itPath).href)
             messages.it = mod.default || mod
