@@ -825,26 +825,25 @@ onUnmounted(() => {
         <Toolbar :titles="toolbarTitles" @action="handleToolbarAction" />
         <div class="flex-1 flex overflow-hidden">
             <!-- Outline Panel -->
-            <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('outline.title')"
-                :width="outlineWidth" @select="handleOutlineSelect" />
-            
+            <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('outline.title')" :width="outlineWidth"
+                @select="handleOutlineSelect" />
+
             <!-- Resize Handle per Outline -->
             <ResizeHandle v-show="showOutline" @mousedown="startOutlineResize" />
-            
+
             <div class="flex-1 flex overflow-hidden">
                 <!-- Markdown Editor -->
                 <MarkdownEditor v-show="viewMode === 'split' || viewMode === 'raw'"
-                    :width="viewMode === 'split' ? editorWidth : null"
-                    ref="markdownEditorRef" v-model="markdownContent"
+                    :width="viewMode === 'split' ? editorWidth : null" ref="markdownEditorRef" v-model="markdownContent"
                     :placeholder="t('editor.placeholder')" @cursor="handleCursor" />
-                
+
                 <!-- Resize Handle tra Editor e Preview -->
                 <ResizeHandle v-show="viewMode === 'split'" @mousedown="startEditorResize" />
-                
+
                 <!-- Preview Pane -->
                 <PreviewPane ref="previewPaneRef" v-show="viewMode === 'split'" :html="renderedMarkdown"
                     :title="t('preview.title')" :readonlyLabel="t('preview.readonly')" />
-                
+
                 <!-- WYSIWYG Editor -->
                 <WysiwygEditor v-show="viewMode === 'preview'" :editor="tiptapEditor" />
             </div>

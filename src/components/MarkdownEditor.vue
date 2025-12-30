@@ -145,14 +145,15 @@ defineExpose({
 </script>
 
 <template>
-    <div class="flex-col" :class="props.width ? 'flex' : 'flex flex-1'" :style="{ width: props.width ? `${props.width}px` : undefined, flexShrink: props.width ? 0 : undefined, borderRight: props.width ? '1px solid var(--editor-header-border)' : 'none' }">
-        <div class="px-4 py-2 flex items-center justify-between" style="background-color: var(--editor-header-bg); border-bottom: 1px solid var(--editor-header-border);">
+    <div class="flex-col" :class="props.width ? 'flex' : 'flex flex-1'"
+        :style="{ width: props.width ? `${props.width}px` : undefined, flexShrink: props.width ? 0 : undefined, borderRight: props.width ? '1px solid var(--editor-header-border)' : 'none' }">
+        <div class="px-4 py-2 flex items-center justify-between"
+            style="background-color: var(--editor-header-bg); border-bottom: 1px solid var(--editor-header-border);">
             <span class="text-sm font-medium" style="color: var(--editor-header-text);">Editor Markdown</span>
             <span class="text-xs" style="color: var(--editor-header-label);">{{ content.length }} caratteri</span>
         </div>
         <textarea ref="textareaRef" :value="content" @input="update($event.target.value)" @click="emitCursor"
-            @mouseup="emitCursor" @keyup="emitCursor"
-            class="markdown-editor-textarea"
-            :placeholder="props.placeholder" spellcheck="false"></textarea>
+            @mouseup="emitCursor" @keyup="emitCursor" class="markdown-editor-textarea" :placeholder="props.placeholder"
+            spellcheck="false"></textarea>
     </div>
 </template>

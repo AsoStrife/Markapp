@@ -7,18 +7,14 @@ function handleMouseDown(event) {
 </script>
 
 <template>
-    <div 
-        class="resize-handle"
-        @mousedown="handleMouseDown"
-        :style="{ 
-            width: '4px', 
-            cursor: 'col-resize',
-            backgroundColor: 'transparent',
-            position: 'relative',
-            zIndex: 10,
-            flexShrink: 0
-        }"
-    >
+    <div class="resize-handle" @mousedown="handleMouseDown" :style="{
+        width: '4px',
+        cursor: 'col-resize',
+        backgroundColor: 'transparent',
+        position: 'relative',
+        zIndex: 10,
+        flexShrink: 0
+    }">
         <div class="resize-handle-line"></div>
     </div>
 </template>

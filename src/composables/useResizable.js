@@ -28,12 +28,12 @@ export function useResizable(storageKey, defaultWidth = 256, minWidth = 150, get
 
     function resize(event) {
         if (!isResizing.value) return
-        
+
         // Usa requestAnimationFrame per evitare lag
         if (animationFrameId) {
             cancelAnimationFrame(animationFrameId)
         }
-        
+
         animationFrameId = requestAnimationFrame(() => {
             const delta = event.clientX - startX.value
             const newWidth = Math.max(minWidth, Math.min(cachedMaxWidth, startWidth.value + delta))

@@ -44,16 +44,17 @@ const visibleItems = computed(() => {
 </script>
 
 <template>
-    <div class="h-full flex flex-col" :style="{ width: `${props.width}px`, backgroundColor: 'var(--outline-bg)', borderRight: '1px solid var(--outline-header-border)' }">
-        <div class="px-3 py-2 text-sm font-semibold" style="background-color: var(--outline-header-bg); border-bottom: 1px solid var(--outline-header-border); color: var(--outline-header-text);">
+    <div class="h-full flex flex-col"
+        :style="{ width: `${props.width}px`, backgroundColor: 'var(--outline-bg)', borderRight: '1px solid var(--outline-header-border)' }">
+        <div class="px-3 py-2 text-sm font-semibold"
+            style="background-color: var(--outline-header-bg); border-bottom: 1px solid var(--outline-header-border); color: var(--outline-header-text);">
             {{ props.title }}
         </div>
         <div class="flex-1 overflow-auto py-2">
             <ul class="space-y-0.5">
                 <li v-for="({ it, pos }) in visibleItems" :key="it.index">
                     <div class="flex items-center">
-                        <button v-if="hasChildrenAt(pos)"
-                            class="mx-1 w-5 h-5 flex items-center justify-center"
+                        <button v-if="hasChildrenAt(pos)" class="mx-1 w-5 h-5 flex items-center justify-center"
                             style="color: var(--outline-icon-text);"
                             @mouseenter="$event.target.style.color = 'var(--outline-icon-hover)'"
                             @mouseleave="$event.target.style.color = 'var(--outline-icon-text)'"
@@ -65,13 +66,11 @@ const visibleItems = computed(() => {
                                     d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
-                        <button
-                            class="flex-1 text-left px-3 py-1.5 rounded transition-colors"
+                        <button class="flex-1 text-left px-3 py-1.5 rounded transition-colors"
                             :style="{ paddingLeft: `${(it.level - 1) * 12 + 12}px`, color: 'var(--outline-item-text)' }"
                             @mouseenter="$event.target.style.backgroundColor = 'var(--outline-item-hover)'"
                             @mouseleave="$event.target.style.backgroundColor = 'transparent'"
-                            @click="selectItem(it.index)"
-                            :title="it.title">
+                            @click="selectItem(it.index)" :title="it.title">
                             <span class="text-xs" style="color: var(--outline-item-label);">H{{ it.level }}</span>
                             <span class="ml-2 truncate">{{ it.title }}</span>
                         </button>
