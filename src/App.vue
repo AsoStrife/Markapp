@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocalStorage } from '@vueuse/core'
 import { useTheme } from './composables/useTheme'
@@ -111,6 +111,7 @@ const viewMode = ref('split') // 'split', 'raw', 'preview'
 const markdownEditorRef = ref(null)
 const isUpdatingFromTiptap = ref(false)
 const isUpdatingFromMarkdown = ref(false)
+const isLoadingFile = ref(false)
 const showOutline = ref(true)
 const restoreSessionEnabled = useLocalStorage('markapp.restoreSession', true)
 const sessionState = useLocalStorage('markapp.session', { filePath: null, cursor: 0 })
@@ -336,7 +337,10 @@ function handleOutlineSelect(index) {
 
 // Watch per sincronizzare markdown → Tiptap
 watch(markdownContent, (newValue) => {
-    isModified.value = true
+    // Non impostare isModified se stiamo caricando un file
+    if (!isLoadingFile.value) {
+        isModified.value = true
+    }
 
     if (!isUpdatingFromTiptap.value && tiptapEditor.value && viewMode.value !== 'preview') {
         isUpdatingFromMarkdown.value = true
@@ -478,9 +482,9 @@ async function handleOpen() {
 
     const result = await window.electronAPI.openFileDialog()
     if (result.success) {
+        isLoadingFile.value = true
         markdownContent.value = result.content
         currentFilePath.value = result.filePath
-        isModified.value = false
 
         if (restoreSessionEnabled.value) {
             sessionState.value = {
@@ -496,17 +500,22 @@ async function handleOpen() {
             tiptapEditor.value.commands.setContent(html, false)
             isUpdatingFromMarkdown.value = false
         }
+
+        // Imposta isModified a false dopo tutti gli aggiornamenti
+        await nextTick()
+        isModified.value = false
+        isLoadingFile.value = false
     } else if (result.error) {
         alert(t('alerts.openError', { error: result.error }))
     }
 }
 
-function handleNew() {
+async function handleNew() {
     const lang = locale.value || 'en'
     const newContent = lang === 'it' ? welcomeIt : welcomeEn
+    isLoadingFile.value = true
     markdownContent.value = newContent
     currentFilePath.value = null
-    isModified.value = false
 
     if (restoreSessionEnabled.value) {
         sessionState.value = { filePath: null, cursor: 0 }
@@ -519,6 +528,11 @@ function handleNew() {
         tiptapEditor.value.commands.setContent(html, false)
         isUpdatingFromMarkdown.value = false
     }
+
+    // Imposta isModified a false dopo tutti gli aggiornamenti
+    await nextTick()
+    isModified.value = false
+    isLoadingFile.value = false
 }
 
 async function handleBeforeClose() {
@@ -658,10 +672,10 @@ onMounted(() => {
             handleOpen()
         })
 
-        window.electronAPI.onFileOpened((data) => {
+        window.electronAPI.onFileOpened(async (data) => {
+            isLoadingFile.value = true
             markdownContent.value = data.content
             currentFilePath.value = data.filePath
-            isModified.value = false
 
             if (restoreSessionEnabled.value) {
                 sessionState.value = {
@@ -676,6 +690,11 @@ onMounted(() => {
                 tiptapEditor.value.commands.setContent(html, false)
                 isUpdatingFromMarkdown.value = false
             }
+
+            // Imposta isModified a false dopo tutti gli aggiornamenti
+            await nextTick()
+            isModified.value = false
+            isLoadingFile.value = false
         })
 
         window.electronAPI.onFileSave(() => {
@@ -689,11 +708,11 @@ onMounted(() => {
 
         // Attempt session restore on startup if enabled
         if (restoreSessionEnabled.value && sessionState.value && sessionState.value.filePath && window.electronAPI && window.electronAPI.openFileByPath) {
-            window.electronAPI.openFileByPath(sessionState.value.filePath).then((result) => {
+            window.electronAPI.openFileByPath(sessionState.value.filePath).then(async (result) => {
                 if (result && result.success) {
+                    isLoadingFile.value = true
                     markdownContent.value = result.content
                     currentFilePath.value = result.filePath
-                    isModified.value = false
 
                     if (tiptapEditor.value) {
                         isUpdatingFromMarkdown.value = true
@@ -701,6 +720,11 @@ onMounted(() => {
                         tiptapEditor.value.commands.setContent(html, false)
                         isUpdatingFromMarkdown.value = false
                     }
+
+                    // Imposta isModified a false dopo tutti gli aggiornamenti
+                    await nextTick()
+                    isModified.value = false
+                    isLoadingFile.value = false
 
                     // Jump to last cursor index (clamped)
                     const idx = Math.max(0, Math.min(sessionState.value.cursor || 0, (result.content || '').length))
@@ -717,11 +741,11 @@ onMounted(() => {
             }).catch(() => { /* ignore */ })
         }
         // Handle file opened via file association (double-click, right-click → Open with)
-        window.electronAPI.onOpenFile((data) => {
+        window.electronAPI.onOpenFile(async (data) => {
             if (data && data.content !== undefined) {
+                isLoadingFile.value = true
                 markdownContent.value = data.content
                 currentFilePath.value = data.filePath
-                isModified.value = false
 
                 if (restoreSessionEnabled.value) {
                     sessionState.value = {
@@ -736,6 +760,11 @@ onMounted(() => {
                     tiptapEditor.value.commands.setContent(html, false)
                     isUpdatingFromMarkdown.value = false
                 }
+
+                // Imposta isModified a false dopo tutti gli aggiornamenti
+                await nextTick()
+                isModified.value = false
+                isLoadingFile.value = false
             }
         })
 
