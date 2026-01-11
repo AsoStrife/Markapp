@@ -127,5 +127,57 @@ export default {
     stats: {
         lines: 'lines',
         words: 'words'
+    },
+    shortcuts: {
+        new: 'New File',
+        open: 'Open File',
+        save: 'Save',
+        saveAs: 'Save As',
+        bold: 'Bold',
+        italic: 'Italic',
+        underline: 'Underline',
+        strike: 'Strikethrough',
+        code: 'Inline Code',
+        codeBlock: 'Code Block',
+        h1: 'Heading 1',
+        h2: 'Heading 2',
+        h3: 'Heading 3',
+        h4: 'Heading 4',
+        bulletList: 'Bullet List',
+        orderedList: 'Numbered List',
+        taskList: 'Task List',
+        blockquote: 'Blockquote',
+        link: 'Insert Link',
+        image: 'Insert Image',
+        hr: 'Horizontal Rule',
+        table: 'Insert Table',
+        find: 'Find',
+        replace: 'Find and Replace',
+        toggleOutline: 'Toggle Outline',
+        settings: 'Settings'
+    },
+    shortcutCategories: {
+        file: 'File',
+        format: 'Format',
+        navigation: 'Navigation'
+    },
+    settingsDialog: {
+        title: 'Settings',
+        generalTab: 'General',
+        shortcutsTab: 'Shortcuts',
+        theme: 'Theme',
+        themeDark: 'Dark',
+        themeLight: 'Light',
+        language: 'Language',
+        restoreSession: 'Restore last session on startup',
+        shortcutAction: 'Action',
+        shortcutKeys: 'Shortcut',
+        shortcutEdit: 'Click to edit',
+        shortcutReset: 'Reset',
+        shortcutResetAll: 'Reset All to Defaults',
+        shortcutConflict: 'This shortcut conflicts with: {action}',
+        shortcutRecording: 'Press new shortcut...',
+        shortcutCancel: 'Press Escape to cancel',
+        close: 'Close'
     }
 }

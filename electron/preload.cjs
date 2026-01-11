@@ -63,5 +63,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onShowReplace: (callback) => {
         ipcRenderer.on('show-replace', callback)
         return () => ipcRenderer.removeListener('show-replace', callback)
-    }
+    },
+
+    // Settings
+    onShowSettings: (callback) => {
+        ipcRenderer.on('show-settings', callback)
+        return () => ipcRenderer.removeListener('show-settings', callback)
+    },
+
+    // Shortcuts sync
+    setShortcuts: (shortcuts) => ipcRenderer.send('set-shortcuts', shortcuts),
+    getShortcuts: () => ipcRenderer.invoke('get-shortcuts')
 })

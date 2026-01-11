@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useLocalStorage } from '@vueuse/core'
 import { useTheme } from './composables/useTheme'
 import { useResizable } from './composables/useResizable'
+import { useShortcuts } from './composables/useShortcuts'
 // Import welcome markdown (Italian)
 import welcomeIt from './assets/defaults/md/it.md?raw'
 import welcomeEn from './assets/defaults/md/en.md?raw'
@@ -38,6 +39,7 @@ import OutlinePanel from './components/OutlinePanel.vue'
 import ConfirmCloseDialog from './components/ConfirmCloseDialog.vue'
 import SearchReplaceDialog from './components/SearchReplaceDialog.vue'
 import ResizeHandle from './components/ResizeHandle.vue'
+import SettingsDialog from './components/SettingsDialog.vue'
 
 // Configurazione lowlight per syntax highlighting
 const lowlight = createLowlight(common)
@@ -781,54 +783,89 @@ onMounted(() => {
         window.electronAPI.onShowReplace(() => {
             handleShowReplace()
         })
+
+        // Handle settings from menu
+        if (window.electronAPI.onShowSettings) {
+            window.electronAPI.onShowSettings(() => {
+                handleShowSettings()
+            })
+        }
     }
 })
 
-// Gestione shortcut tastiera
+// Shortcuts composable
+const { 
+    shortcutLabels, 
+    registerAction, 
+    handleKeyEvent, 
+    syncToElectron 
+} = useShortcuts()
+
+// Settings dialog state
+const showSettingsDialog = ref(false)
+
+function handleShowSettings() {
+    showSettingsDialog.value = true
+}
+
+function handleCloseSettings() {
+    showSettingsDialog.value = false
+}
+
+function handleSettingsLocaleChange(newLocale) {
+    setLanguage(newLocale)
+}
+
+// Register all shortcut actions
+function registerShortcutActions() {
+    // File operations
+    registerAction('new', handleNew)
+    registerAction('open', handleOpen)
+    registerAction('save', handleSave)
+    registerAction('saveAs', handleSaveAs)
+    
+    // Formatting
+    registerAction('bold', () => handleToolbarAction('bold'))
+    registerAction('italic', () => handleToolbarAction('italic'))
+    registerAction('underline', () => handleToolbarAction('underline'))
+    registerAction('strike', () => handleToolbarAction('strike'))
+    registerAction('code', () => handleToolbarAction('code'))
+    registerAction('codeBlock', () => handleToolbarAction('codeBlock'))
+    registerAction('h1', () => handleToolbarAction('h1'))
+    registerAction('h2', () => handleToolbarAction('h2'))
+    registerAction('h3', () => handleToolbarAction('h3'))
+    registerAction('h4', () => handleToolbarAction('h4'))
+    registerAction('bulletList', () => handleToolbarAction('bulletList'))
+    registerAction('orderedList', () => handleToolbarAction('orderedList'))
+    registerAction('taskList', () => handleToolbarAction('taskList'))
+    registerAction('blockquote', () => handleToolbarAction('blockquote'))
+    registerAction('link', () => handleToolbarAction('link'))
+    registerAction('image', () => handleToolbarAction('image'))
+    registerAction('hr', () => handleToolbarAction('hr'))
+    registerAction('table', () => handleToolbarAction('table'))
+    
+    // Navigation
+    registerAction('find', handleShowSearch)
+    registerAction('replace', handleShowReplace)
+    registerAction('toggleOutline', () => { showOutline.value = !showOutline.value })
+    registerAction('settings', handleShowSettings)
+}
+
+// Central keyboard event handler using shortcuts composable
 function handleKeyDown(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault()
-        if (e.shiftKey) {
-            handleSaveAs()
-        } else {
-            handleSave()
-        }
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-        e.preventDefault()
-        handleOpen()
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-        e.preventDefault()
-        handleNew()
-    }
-    // Shortcut per formattazione
-    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-        e.preventDefault()
-        handleToolbarAction('bold')
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
-        e.preventDefault()
-        handleToolbarAction('italic')
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
-        e.preventDefault()
-        handleToolbarAction('underline')
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault()
-        handleShowSearch()
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
-        e.preventDefault()
-        handleShowReplace()
-    }
+    handleKeyEvent(e)
 }
 
 onMounted(() => {
+    // Register shortcut actions before adding listener
+    registerShortcutActions()
+    
     window.addEventListener('keydown', handleKeyDown)
     // Inizializza il tema all'avvio dell'app
     initTheme()
+    
+    // Sync shortcuts to Electron menu
+    syncToElectron()
 })
 
 onUnmounted(() => {
@@ -851,7 +888,7 @@ onUnmounted(() => {
 <template>
     <div class="h-screen flex flex-col" style="background-color: var(--app-bg); color: var(--app-text);">
         <TitleBar :currentFilePath="currentFilePath" :isModified="isModified" :untitledLabel="t('file.untitled')" />
-        <Toolbar :titles="toolbarTitles" @action="handleToolbarAction" />
+        <Toolbar :titles="toolbarTitles" :shortcutLabels="shortcutLabels" @action="handleToolbarAction" />
         <div class="flex-1 flex overflow-hidden">
             <!-- Outline Panel -->
             <OutlinePanel v-show="showOutline" :items="outlineItems" :title="t('outline.title')" :width="outlineWidth"
@@ -895,5 +932,15 @@ onUnmounted(() => {
         <SearchReplaceDialog :visible="showSearchDialog" :mode="searchDialogMode" :content="markdownContent"
             :cursorPosition="markdownEditorRef?.getCursorPosition() || 0" @close="handleSearchClose"
             @find="handleSearchFind" @replace="handleSearchReplace" @replaceAll="handleSearchReplaceAll" />
+
+        <!-- Settings Dialog -->
+        <SettingsDialog 
+            :visible="showSettingsDialog" 
+            :locale="locale" 
+            :languages="languages"
+            :restoreSessionEnabled="restoreSessionEnabled"
+            @close="handleCloseSettings"
+            @update:locale="handleSettingsLocaleChange"
+            @update:restoreSessionEnabled="val => restoreSessionEnabled = val" />
     </div>
 </template>

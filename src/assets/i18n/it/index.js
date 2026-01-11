@@ -127,5 +127,57 @@ export default {
     stats: {
         lines: 'righe',
         words: 'parole'
+    },
+    shortcuts: {
+        new: 'Nuovo File',
+        open: 'Apri File',
+        save: 'Salva',
+        saveAs: 'Salva con nome',
+        bold: 'Grassetto',
+        italic: 'Corsivo',
+        underline: 'Sottolineato',
+        strike: 'Barrato',
+        code: 'Codice Inline',
+        codeBlock: 'Blocco Codice',
+        h1: 'Titolo 1',
+        h2: 'Titolo 2',
+        h3: 'Titolo 3',
+        h4: 'Titolo 4',
+        bulletList: 'Lista Puntata',
+        orderedList: 'Lista Numerata',
+        taskList: 'Lista Task',
+        blockquote: 'Citazione',
+        link: 'Inserisci Link',
+        image: 'Inserisci Immagine',
+        hr: 'Linea Orizzontale',
+        table: 'Inserisci Tabella',
+        find: 'Trova',
+        replace: 'Trova e Sostituisci',
+        toggleOutline: 'Mostra/Nascondi Indice',
+        settings: 'Impostazioni'
+    },
+    shortcutCategories: {
+        file: 'File',
+        format: 'Formattazione',
+        navigation: 'Navigazione'
+    },
+    settingsDialog: {
+        title: 'Impostazioni',
+        generalTab: 'Generale',
+        shortcutsTab: 'Scorciatoie',
+        theme: 'Tema',
+        themeDark: 'Scuro',
+        themeLight: 'Chiaro',
+        language: 'Lingua',
+        restoreSession: 'Ripristina ultima sessione all\'avvio',
+        shortcutAction: 'Azione',
+        shortcutKeys: 'Scorciatoia',
+        shortcutEdit: 'Clicca per modificare',
+        shortcutReset: 'Ripristina',
+        shortcutResetAll: 'Ripristina Tutti i Default',
+        shortcutConflict: 'Questa scorciatoia è in conflitto con: {action}',
+        shortcutRecording: 'Premi la nuova scorciatoia...',
+        shortcutCancel: 'Premi Escape per annullare',
+        close: 'Chiudi'
     }
 }

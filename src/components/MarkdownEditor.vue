@@ -43,6 +43,46 @@ function insertText(before, after = '', defaultText = '') {
     }, 0)
 }
 
+/**
+ * Toggle inline formatting (bold, italic, etc.) with proper detection and removal.
+ * Checks if the selection or surrounding context already has the formatting markers.
+ * If found, removes them; otherwise, adds them.
+ * 
+ * @param {string} marker - The formatting marker(s) to toggle (e.g., '**', '*', '~~')
+ * @param {string} defaultText - Default text to insert if no selection exists
+ */
+function toggleInlineFormat(marker, defaultText = '') {
+    const textarea = textareaRef.value
+    if (!textarea) return
+    
+    const { start, end, text } = getSelection()
+    const value = content.value
+    const markerLen = marker.length
+    
+    // Check if the selection already has the markers immediately before/after
+    const before = value.substring(Math.max(0, start - markerLen), start)
+    const after = value.substring(end, end + markerLen)
+    
+    if (before === marker && after === marker) {
+        // Remove the markers
+        const newText = value.substring(0, start - markerLen) + text + value.substring(end + markerLen)
+        update(newText)
+        setTimeout(() => {
+            textarea.focus()
+            textarea.setSelectionRange(start - markerLen, end - markerLen)
+        }, 0)
+    } else {
+        // Add the markers
+        const selectedText = text || defaultText
+        const newText = value.substring(0, start) + marker + selectedText + marker + value.substring(end)
+        update(newText)
+        setTimeout(() => {
+            textarea.focus()
+            textarea.setSelectionRange(start + markerLen, start + markerLen + selectedText.length)
+        }, 0)
+    }
+}
+
 function insertAtLineStart(prefix) {
     const textarea = textareaRef.value
     if (!textarea) return
@@ -54,21 +94,63 @@ function insertAtLineStart(prefix) {
     setTimeout(() => { textarea.focus(); textarea.setSelectionRange(start + prefix.length, start + prefix.length) }, 0)
 }
 
-// Formatting methods exposed to parent
-function formatBold() { insertText('**', '**', 'testo grassetto') }
-function formatItalic() { insertText('*', '*', 'testo corsivo') }
-function formatUnderline() { insertText('<u>', '</u>', 'testo sottolineato') }
-function formatStrikethrough() { insertText('~~', '~~', 'testo barrato') }
-function formatCode() { insertText('`', '`', 'codice') }
+/**
+ * Toggle line-start formatting (headings, lists, blockquotes, etc.).
+ * Checks if the current line already starts with the prefix.
+ * If found, removes it; otherwise, adds it.
+ * 
+ * @param {string} prefix - The prefix to toggle at the start of the line
+ */
+function toggleLineFormat(prefix) {
+    const textarea = textareaRef.value
+    if (!textarea) return
+    
+    const { start } = getSelection()
+    const value = content.value
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1
+    const lineEnd = value.indexOf('\n', start)
+    const actualLineEnd = lineEnd === -1 ? value.length : lineEnd
+    const currentLine = value.substring(lineStart, actualLineEnd)
+    
+    // Check if the line already starts with this prefix
+    if (currentLine.trimStart().startsWith(prefix.trim())) {
+        // Remove the prefix (handle both with and without leading spaces)
+        const trimmedPrefix = prefix.trim()
+        const lineWithoutPrefix = currentLine.replace(new RegExp(`^\\s*${trimmedPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s?`), '')
+        const newText = value.substring(0, lineStart) + lineWithoutPrefix + value.substring(actualLineEnd)
+        const cursorOffset = start - lineStart
+        const newCursorPos = lineStart + Math.max(0, cursorOffset - (currentLine.length - lineWithoutPrefix.length))
+        update(newText)
+        setTimeout(() => {
+            textarea.focus()
+            textarea.setSelectionRange(newCursorPos, newCursorPos)
+        }, 0)
+    } else {
+        // Add the prefix
+        const newText = value.substring(0, lineStart) + prefix + value.substring(lineStart)
+        update(newText)
+        setTimeout(() => {
+            textarea.focus()
+            textarea.setSelectionRange(start + prefix.length, start + prefix.length)
+        }, 0)
+    }
+}
+
+// Formatting methods exposed to parent - using toggle functions for proper add/remove behavior
+function formatBold() { toggleInlineFormat('**', 'testo grassetto') }
+function formatItalic() { toggleInlineFormat('*', 'testo corsivo') }
+function formatUnderline() { toggleInlineFormat('<u>', 'testo sottolineato') }
+function formatStrikethrough() { toggleInlineFormat('~~', 'testo barrato') }
+function formatCode() { toggleInlineFormat('`', 'codice') }
 function formatCodeBlock() { insertText('\n```\n', '\n```\n', 'codice') }
-function formatBlockquote() { insertAtLineStart('> ') }
-function formatH1() { insertAtLineStart('# ') }
-function formatH2() { insertAtLineStart('## ') }
-function formatH3() { insertAtLineStart('### ') }
-function formatH4() { insertAtLineStart('#### ') }
-function formatBulletList() { insertAtLineStart('- ') }
-function formatNumberedList() { insertAtLineStart('1. ') }
-function formatTaskList() { insertAtLineStart('- [ ] ') }
+function formatBlockquote() { toggleLineFormat('> ') }
+function formatH1() { toggleLineFormat('# ') }
+function formatH2() { toggleLineFormat('## ') }
+function formatH3() { toggleLineFormat('### ') }
+function formatH4() { toggleLineFormat('#### ') }
+function formatBulletList() { toggleLineFormat('- ') }
+function formatNumberedList() { toggleLineFormat('1. ') }
+function formatTaskList() { toggleLineFormat('- [ ] ') }
 function formatHorizontalRule() { insertText('\n---\n', '', '') }
 function formatTable() {
     const tableTemplate = `\n| Colonna 1 | Colonna 2 | Colonna 3 |\n|-----------|-----------|-----------|\n| Cella 1   | Cella 2   | Cella 3   |\n| Cella 4   | Cella 5   | Cella 6   |\n`

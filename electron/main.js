@@ -130,6 +130,14 @@ function createWindow() {
                         click: () => {
                             mainWindow.webContents.send('show-replace')
                         }
+                    },
+                    { type: 'separator' },
+                    {
+                        label: msgs.settings?.menu || 'Settings',
+                        accelerator: 'CmdOrCtrl+,',
+                        click: () => {
+                            mainWindow.webContents.send('show-settings')
+                        }
                     }
                 ]
             },
@@ -361,7 +369,9 @@ app.whenReady().then(async () => {
                         { label: msgs.edit.selectAll, accelerator: 'CmdOrCtrl+A', role: 'selectAll' },
                         { type: 'separator' },
                         { label: msgs.edit.find, accelerator: 'CmdOrCtrl+F', click: () => { mainWindow.webContents.send('show-search') } },
-                        { label: msgs.edit.replace, accelerator: 'CmdOrCtrl+H', click: () => { mainWindow.webContents.send('show-replace') } }
+                        { label: msgs.edit.replace, accelerator: 'CmdOrCtrl+H', click: () => { mainWindow.webContents.send('show-replace') } },
+                        { type: 'separator' },
+                        { label: msgs.settings?.menu || 'Settings', accelerator: 'CmdOrCtrl+,', click: () => { mainWindow.webContents.send('show-settings') } }
                     ]
                 },
                 { label: msgs.view.menu, submenu: [{ label: msgs.view.reload, accelerator: 'CmdOrCtrl+R', click: () => { mainWindow.webContents.reload() } }, { label: msgs.view.devtools, accelerator: 'F12', click: () => { mainWindow.webContents.toggleDevTools() } }, { type: 'separator' }, { label: msgs.view.zoomIn, accelerator: 'CmdOrCtrl+Plus', role: 'zoomIn' }, { label: msgs.view.zoomOut, accelerator: 'CmdOrCtrl+-', role: 'zoomOut' }, { label: msgs.view.resetZoom, accelerator: 'CmdOrCtrl+0', role: 'resetZoom' }, { type: 'separator' }, { label: msgs.view.fullscreen, accelerator: 'F11', role: 'togglefullscreen' }] },
@@ -395,6 +405,20 @@ app.whenReady().then(async () => {
     // Provide current theme to renderer
     ipcMain.handle('get-app-theme', () => {
         return nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
+    })
+
+    // Store custom shortcuts from renderer
+    let customShortcuts = {}
+    
+    ipcMain.on('set-shortcuts', (event, shortcuts) => {
+        customShortcuts = shortcuts || {}
+        // Note: In a full implementation, we would rebuild the menu with updated accelerators
+        // For now, shortcuts are primarily handled in the renderer process
+        console.log('[Shortcuts] Updated shortcuts received from renderer')
+    })
+    
+    ipcMain.handle('get-shortcuts', () => {
+        return customShortcuts
     })
 
     // Handle close confirmation from renderer
